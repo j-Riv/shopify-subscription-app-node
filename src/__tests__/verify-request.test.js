@@ -2,9 +2,9 @@ import { Shopify } from '@shopify/shopify-api';
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, test, vi } from 'vitest';
-import { serve } from '../../__tests__/serve';
+import { serve } from './serve';
 
-import verifyRequest from '../../../../dist/server/middleware/verify-request.js';
+import verifyRequest from '../../dist/server/middleware/verify-request.js';
 
 describe('verify-request middleware', async () => {
   // this is only used to grab app wide constants

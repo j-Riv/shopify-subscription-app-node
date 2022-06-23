@@ -216,7 +216,7 @@ describe('shopify-app-node server', async () => {
   });
 
   describe('graphql proxy', () => {
-    vi.mock(`${process.cwd()}/server/middleware/verify-request.js`, () => ({
+    vi.mock(`${process.cwd()}/dist/server/middleware/verify-request.js`, () => ({
       default: vi.fn(() => (req, res, next) => {
         next();
       }),
