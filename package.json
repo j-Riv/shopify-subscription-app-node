@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "ts": "tsc -w",
-    "build": "npm run build:client",
+    "build": "npm run build:client && tsc",
     "build:client": "vite build --outDir dist/client",
     "debug": "node --inspect-brk server/index.js",
     "newDev": "cross-env NODE_ENV=development nodemon",

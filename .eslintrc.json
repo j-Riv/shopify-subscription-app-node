@@ -2,9 +2,9 @@
   "extends": ["airbnb", "airbnb-typescript", "plugin:react/recommended"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint", "react", "react-hooks"],
-  // "parserOptions": {
-  //   "project": "./tsconfig.json"
-  // },
+  "parserOptions": {
+    "project": "tsconfig.json"
+  },
   "rules": {
     "react/jsx-props-no-spreading": ["error", { "custom": "ignore" }],
     "react/function-component-definition": [
@@ -37,5 +37,5 @@
     "import/prefer-default-export": "off",
     "@typescript-eslint/no-shadow": "off"
   },
-  "ignorePatterns": ["vite.config.js", "_error.js"]
+  "ignorePatterns": ["vite.config.js", "_error.js", "__tests__"]
 }

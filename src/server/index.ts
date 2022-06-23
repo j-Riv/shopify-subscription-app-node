@@ -7,6 +7,7 @@ import 'dotenv/config';
 
 import applyAuthMiddleware from './middleware/auth.js';
 import verifyRequest from './middleware/verify-request.js';
+import { ViteDevServer } from 'vite';
 
 const USE_ONLINE_TOKENS = true;
 const TOP_LEVEL_OAUTH_COOKIE = 'shopify_top_level_oauth';
@@ -112,7 +113,7 @@ export const createServer = async (
   /**
    * @type {import('vite').ViteDevServer}
    */
-  let vite;
+  let vite: ViteDevServer;
   if (!isProd) {
     vite = await import('vite').then(({ createServer }) =>
       createServer({
