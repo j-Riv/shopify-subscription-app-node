@@ -19,6 +19,6 @@
     "isolatedModules": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/server/**/*.ts"],
-  "exclude": ["node_modules/**", "dist"]
+  "include": ["src/server/**/*.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules/**", "dist", "src/client"]
 }

@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "ts": "tsc -w",
-    "build": "npm run build:client",
+    "build": "npm run build:client && tsc",
     "build:client": "vite build --outDir dist/client",
     "debug": "node --inspect-brk server/index.js",
     "newDev": "cross-env NODE_ENV=development nodemon",
@@ -48,7 +48,9 @@
     "eslint": "^8.18.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-react": "^7.30.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^7.0.4",
     "nodemon": "^2.0.16",
