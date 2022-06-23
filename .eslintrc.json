@@ -2,9 +2,9 @@
   "extends": ["airbnb", "airbnb-typescript", "plugin:react/recommended"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint", "react", "react-hooks"],
-  "parserOptions": {
-    "project": "./tsconfig.json"
-  },
+  // "parserOptions": {
+  //   "project": "./tsconfig.json"
+  // },
   "rules": {
     "react/jsx-props-no-spreading": ["error", { "custom": "ignore" }],
     "react/function-component-definition": [
