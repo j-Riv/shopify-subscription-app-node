@@ -1,41 +1,13 @@
 {
-  "extends": ["airbnb", "airbnb-typescript", "plugin:react/recommended"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "react", "react-hooks"],
   "parserOptions": {
-    "project": "tsconfig.json"
+    "ecmaVersion": "latest",
+    "sourceType": "module"
   },
-  "rules": {
-    "react/jsx-props-no-spreading": ["error", { "custom": "ignore" }],
-    "react/function-component-definition": [
-      1,
-      {
-        "namedComponents": "arrow-function",
-        "unnamedComponents": "arrow-function"
-      }
-    ],
-    "jsx-a11y/alt-text": [
-      1,
-      {
-        "elements": ["img", "object", "area", "input[type=\"image\"]"],
-        "img": ["Image"],
-        "object": ["Object"],
-        "area": ["Area"],
-        "input[type=\"image\"]": ["InputImage"]
-      }
-    ],
-    "operator-linebreak": "off",
-    "implicit-arrow-linebreak": "off",
-    "object-curly-newline": "off",
-    "react/jsx-one-expression-per-line": "off",
-    "react-hooks/exhaustive-deps": "error",
-    "import/no-cycle": "off",
-    "jsx-a11y/anchor-is-valid": "off",
-    "function-paren-newline": "off",
-    "consistent-return": "off",
-    "@typescript-eslint/no-unused-vars": "off",
-    "import/prefer-default-export": "off",
-    "@typescript-eslint/no-shadow": "off"
-  },
-  "ignorePatterns": ["vite.config.js", "_error.js", "__tests__"]
+  "plugins": ["@typescript-eslint"],
+  "rules": {}
 }
