@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Page, Layout, TextContainer, Image, Stack, Link, Heading } from '@shopify/polaris';
+import { Link as RouterLink } from 'react-router-dom';
 import trophyImgUrl from '../assets/home-trophy.png';
 import ProductsCard from './ProductsCard';
 
@@ -38,6 +39,9 @@ const HomePage = () => (
                     this Shopify tutorial
                   </Link>{' '}
                   📚{' '}
+                </p>
+                <p>
+                  <RouterLink to="/test">To Test</RouterLink>
                 </p>
               </TextContainer>
             </Stack.Item>

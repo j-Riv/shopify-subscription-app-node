@@ -6,7 +6,7 @@
   "extends": ["plugin:react/recommended", "airbnb-typescript"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json",
+    "project": "src/client/tsconfig.json",
     "ecmaFeatures": {
       "jsx": true
     },
@@ -14,7 +14,10 @@
     "sourceType": "module"
   },
   "plugins": ["react", "@typescript-eslint", "import"],
-  "rules": {},
+  "rules": {
+    "import/extensions": "off",
+    "@typescript-eslint/no-shadow": "off"
+  },
   "settings": {
     "react": {
       "version": "^17.0.2"

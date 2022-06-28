@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache } from '@apollo/client';
 import { Provider as AppBridgeProvider, useAppBridge } from '@shopify/app-bridge-react';
 import { authenticatedFetch } from '@shopify/app-bridge-utils';
@@ -7,7 +8,12 @@ import { AppProvider as PolarisProvider } from '@shopify/polaris';
 import translations from '@shopify/polaris/locales/en.json';
 import '@shopify/polaris/build/esm/styles.css';
 import { ClientApplication, AppBridgeState } from '@shopify/app-bridge';
-import HomePage from './components/HomePage';
+// import HomePage from './components/HomePage';
+import TestPage from './components/TestPage';
+import Dashboard from './routes/dashboard';
+import SellingPlanGroups from './routes/selling-plan-groups';
+import SellingPlanGroup from './routes/selling-plan-group';
+import Search from './routes/search';
 
 export function userLoggedInFetch(app: ClientApplication<AppBridgeState>) {
   const fetchFunction = authenticatedFetch(app);
@@ -46,19 +52,27 @@ const MyProvider: React.FC<Props> = ({ children }) => {
 };
 
 const App = () => (
-  <PolarisProvider i18n={translations}>
-    <AppBridgeProvider
-      config={{
-        apiKey: process.env.SHOPIFY_API_KEY,
-        host: new URL(window.location.href).searchParams.get('host'),
-        forceRedirect: true,
-      }}
-    >
-      <MyProvider>
-        <HomePage />
-      </MyProvider>
-    </AppBridgeProvider>
-  </PolarisProvider>
+  <BrowserRouter>
+    <PolarisProvider i18n={translations}>
+      <AppBridgeProvider
+        config={{
+          apiKey: process.env.SHOPIFY_API_KEY,
+          host: new URL(window.location.href).searchParams.get('host'),
+          forceRedirect: true,
+        }}
+      >
+        <MyProvider>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/test" element={<TestPage />} />
+            <Route path="/selling-plan-groups" element={<SellingPlanGroups />} />
+            <Route path="/selling-plan-group" element={<SellingPlanGroup />} />
+            <Route path="/search" element={<Search />} />
+          </Routes>
+        </MyProvider>
+      </AppBridgeProvider>
+    </PolarisProvider>
+  </BrowserRouter>
 );
 
 export default App;

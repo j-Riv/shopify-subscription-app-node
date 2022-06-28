@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "transpileOnly": true
+  },
   "compilerOptions": {
     "module": "esnext",
     "allowJs": true,
@@ -20,5 +23,5 @@
     "jsx": "react-jsx"
   },
   "include": ["src/server/**/*.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules/**", "dist", "src/client"]
+  "exclude": ["node_modules/**", "dist", "src/client/**"]
 }

@@ -1,14 +1,21 @@
 // @ts-check
 import { resolve } from 'path';
 import express from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { Shopify, ApiVersion } from '@shopify/shopify-api';
 import RedisStore from './redis-store.js';
+import PgStore from './pg-store.js';
+import Logger from './logger.js';
 import 'dotenv/config';
 
 import applyAuthMiddleware from './middleware/auth.js';
 import verifyRequest from './middleware/verify-request.js';
 import { ViteDevServer } from 'vite';
+
+// routes
+import subscriptionRoutes from './routes/subscriptions.js';
+import proxyRoutes from './routes/proxy.js';
 
 const USE_ONLINE_TOKENS = true;
 const TOP_LEVEL_OAUTH_COOKIE = 'shopify_top_level_oauth';
@@ -18,6 +25,7 @@ const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD;
 
 // Create a new instance of the custom storage class
 const sessionStorage = new RedisStore();
+const pgStorage = new PgStore();
 
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
@@ -39,11 +47,68 @@ Shopify.Context.initialize({
 // Storing the currently active shops in memory will force them
 // to re - login when your server restarts.You should
 // persist this object in your app.
-const ACTIVE_SHOPIFY_SHOPS = {};
+// const ACTIVE_SHOPIFY_SHOPS = {};
+const ACTIVE_SHOPIFY_SHOPS = await pgStorage.loadActiveShops();
 Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     delete ACTIVE_SHOPIFY_SHOPS[shop];
+    pgStorage.deleteActiveShop(shop);
+  },
+});
+
+// webhook handlers
+Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_CREATE', {
+  path: '/webhooks',
+  webhookHandler: async (topic, shop, body) => {
+    Logger.log('info', `Subscription Contract Create Webhook`);
+    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    pgStorage.createContract(shop, token, body);
+  },
+});
+
+Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_UPDATE', {
+  path: '/webhooks',
+  webhookHandler: async (topic, shop, body) => {
+    Logger.log('info', `Subscription Contract Update Webhook`);
+    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    pgStorage.updateContract(shop, token, body);
+  },
+});
+
+Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_SUCCESS', {
+  path: '/webhooks',
+  webhookHandler: async (topic, shop, body) => {
+    Logger.log('info', `Subscription Billing Attempt Success Webhook`);
+    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    pgStorage.updateSubscriptionContractAfterSuccess(shop, token, body);
+  },
+});
+
+Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE', {
+  path: '/webhooks',
+  webhookHandler: async (topic, shop, body) => {
+    Logger.log('info', `Subscription Billing Attempt Failure Webhook`);
+    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    const data = JSON.parse(body);
+    const errorCodes = [
+      'EXPIRED_PAYMENT_METHOD',
+      'INVALID_PAYMENT_METHOD',
+      'PAYMENT_METHOD_NOT_FOUND',
+    ];
+    if (
+      data.errorCode === 'PAYMENT_METHOD_DECLINED' ||
+      data.errorCode === 'AUTHENTICATION_ERROR' ||
+      data.errorCode === 'UNEXPECTED_ERROR'
+    ) {
+      // will try again tomorrow
+      pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, false);
+    } else {
+      // get payment method id and send email
+      pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, true);
+    }
+    // Will more than likely create  an errors table to display error notifications to user.
+    Logger.log('error', JSON.stringify(body));
   },
 });
 
@@ -59,7 +124,7 @@ export const createServer = async (
 
   app.use(cookieParser(Shopify.Context.API_SECRET_KEY));
 
-  applyAuthMiddleware(app);
+  applyAuthMiddleware(app, pgStorage);
 
   app.post('/webhooks', async (req, res) => {
     try {
@@ -93,6 +158,11 @@ export const createServer = async (
   });
 
   app.use(express.json());
+
+  // routes
+  app.use(cors());
+  subscriptionRoutes(app);
+  proxyRoutes(app);
 
   app.use((req, res, next) => {
     const { shop } = req.query;
