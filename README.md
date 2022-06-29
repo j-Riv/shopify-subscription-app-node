@@ -2,7 +2,7 @@
 
 > Embedded Shopify App made with Node and TypeScript.
 
-🚧🔨👷 Under Development
+🚧🔨👷 Currently Under Development
 
 ## Environmental Variables
 
@@ -133,4 +133,9 @@ docker system prune
 
 ## Logs
 
-Logs can be found at /app/logs
+Logs can be found at /logs
+
+## Tests
+
+- Server callback test is failing, the auth flow was changed to handle both `online` and `offline` tokens. The test will have to be rewritten.
+- GraphQL tests are failing, don't understand why, will try to fix when I get the chance.
