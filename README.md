@@ -139,3 +139,7 @@ Logs can be found at /logs
 
 - Server callback test is failing, the auth flow was changed to handle both `online` and `offline` tokens. The test will have to be rewritten.
 - GraphQL tests are failing, don't understand why, will try to fix when I get the chance.
+
+## Shopify Embedded App Navigation
+
+You can configure the apps navigation from App > App setup > Embed your app in Shopify Admin > Navigation > Configure.

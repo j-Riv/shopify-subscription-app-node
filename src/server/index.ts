@@ -72,7 +72,8 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_UPDATE', {
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Contract Update Webhook`);
     const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
-    pgStorage.updateContract(shop, token, body);
+    const success = await pgStorage.updateContract(shop, token, body);
+    Logger.log('info', `Subscription Contract Update: ${success}`);
   },
 });
 
@@ -124,6 +125,8 @@ export const createServer = async (
 
   app.use(cookieParser(Shopify.Context.API_SECRET_KEY));
 
+  app.use(cors());
+
   applyAuthMiddleware(app, pgStorage);
 
   app.post('/webhooks', async (req, res) => {
@@ -160,9 +163,29 @@ export const createServer = async (
   app.use(express.json());
 
   // routes
-  app.use(cors());
   subscriptionRoutes(app);
   proxyRoutes(app);
+
+  // move
+  app.post('/contracts-by-status', verifyRequest(app), async (req, res, next) => {
+    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
+    const { shop, accessToken } = session;
+    try {
+      Logger.log('info', `getting all contracts for shop: ${shop}`);
+      const response = await pgStorage.getSubscriptionsByStatus(shop, JSON.stringify(req.body));
+      res.status(200).json(response);
+    } catch (err: any) {
+      Logger.log('error', err.message);
+    }
+  });
+
+  app.get('/payment-failed', verifyRequest(app), async (req, res, next) => {
+    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
+    const { shop } = session;
+    const contracts = await pgStorage.getAllPaymentFailures(shop);
+    res.status(200).json({ contracts });
+  });
+  // end move
 
   app.use((req, res, next) => {
     const { shop } = req.query;

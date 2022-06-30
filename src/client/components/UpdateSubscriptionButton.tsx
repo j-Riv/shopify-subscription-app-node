@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import React, { useState } from 'react';
 import { Button } from '@shopify/polaris';
 import { useMutation } from '@apollo/client';
@@ -132,7 +133,8 @@ function UpdateSubscriptionButton(props: Props) {
     }
   };
 
-  const handleClick = (lineId?: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleClick = (_lineId?: string) => {
     try {
       setLoading(true);
       updateSubscriptionContract({
