@@ -163,7 +163,7 @@ export const removeProductFromSubscriptionPlanGroup = async (req: Request, res: 
         product = await removeProductsFromSellingPlanGroup(req);
       }
       // const products = await removeProductsFromSellingPlanGroup(ctx);
-      req.body = product;
+      res.json(product);
     } else {
       return res.status(401);
     }
