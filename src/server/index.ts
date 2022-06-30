@@ -49,6 +49,7 @@ Shopify.Context.initialize({
 // persist this object in your app.
 // const ACTIVE_SHOPIFY_SHOPS = {};
 const ACTIVE_SHOPIFY_SHOPS = await pgStorage.loadActiveShops();
+console.log('LOADING ACTIVE SHOPS FROM DB', ACTIVE_SHOPIFY_SHOPS);
 Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
@@ -62,8 +63,11 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_CREATE', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Contract Create Webhook`);
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
-    pgStorage.createContract(shop, token, body);
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    if (shopData) {
+      const token = shopData.accessToken;
+      pgStorage.createContract(shop, token, body);
+    }
   },
 });
 
@@ -71,9 +75,12 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_UPDATE', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Contract Update Webhook`);
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
-    const success = await pgStorage.updateContract(shop, token, body);
-    Logger.log('info', `Subscription Contract Update: ${success}`);
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    if (shopData) {
+      const token = shopData.accessToken;
+      const success = await pgStorage.updateContract(shop, token, body);
+      Logger.log('info', `Subscription Contract Update: ${success}`);
+    }
   },
 });
 
@@ -81,8 +88,11 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_SUCCESS', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Billing Attempt Success Webhook`);
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
-    pgStorage.updateSubscriptionContractAfterSuccess(shop, token, body);
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    if (shopData) {
+      const token = shopData.accessToken;
+      pgStorage.updateSubscriptionContractAfterSuccess(shop, token, body);
+    }
   },
 });
 
@@ -90,26 +100,29 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Billing Attempt Failure Webhook`);
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
-    const data = JSON.parse(body);
-    const errorCodes = [
-      'EXPIRED_PAYMENT_METHOD',
-      'INVALID_PAYMENT_METHOD',
-      'PAYMENT_METHOD_NOT_FOUND',
-    ];
-    if (
-      data.errorCode === 'PAYMENT_METHOD_DECLINED' ||
-      data.errorCode === 'AUTHENTICATION_ERROR' ||
-      data.errorCode === 'UNEXPECTED_ERROR'
-    ) {
-      // will try again tomorrow
-      pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, false);
-    } else {
-      // get payment method id and send email
-      pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, true);
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    if (shopData) {
+      const token = shopData.accessToken;
+      const data = JSON.parse(body);
+      const errorCodes = [
+        'EXPIRED_PAYMENT_METHOD',
+        'INVALID_PAYMENT_METHOD',
+        'PAYMENT_METHOD_NOT_FOUND',
+      ];
+      if (
+        data.errorCode === 'PAYMENT_METHOD_DECLINED' ||
+        data.errorCode === 'AUTHENTICATION_ERROR' ||
+        data.errorCode === 'UNEXPECTED_ERROR'
+      ) {
+        // will try again tomorrow
+        pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, false);
+      } else {
+        // get payment method id and send email
+        pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, true);
+      }
+      // Will more than likely create  an errors table to display error notifications to user.
+      Logger.log('error', JSON.stringify(body));
     }
-    // Will more than likely create  an errors table to display error notifications to user.
-    Logger.log('error', JSON.stringify(body));
   },
 });
 
@@ -119,9 +132,11 @@ export const createServer = async (
   isProd = process.env.NODE_ENV === 'production',
 ) => {
   const app = express();
+  console.log('SETTING APP VALUES', ACTIVE_SHOPIFY_SHOPS);
   app.set('top-level-oauth-cookie', TOP_LEVEL_OAUTH_COOKIE);
   app.set('active-shopify-shops', ACTIVE_SHOPIFY_SHOPS);
   app.set('use-online-tokens', USE_ONLINE_TOKENS);
+  console.log('APP SET', app.get('active-shopify-shops'));
 
   app.use(cookieParser(Shopify.Context.API_SECRET_KEY));
 
@@ -206,6 +221,7 @@ export const createServer = async (
 
     // Detect whether we need to reinstall the app, any request from Shopify will
     // include a shop in the query parameters.
+    console.log('ACTIVE_SHOPIFY_SHOPS', app.get('active-shopify-shops'));
     if (app.get('active-shopify-shops')[shop] === undefined && shop) {
       res.redirect(`/auth?${new URLSearchParams(query).toString()}`);
     } else {

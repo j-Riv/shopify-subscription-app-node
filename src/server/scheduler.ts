@@ -63,7 +63,8 @@ export const runBillingAttempts = async () => {
   // loop through active shops
   shops.forEach(async (shop: string) => {
     // get token
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    const token = shopData.accessToken;
     // get all active contracts for shop
     const contracts = await pgStorage.getLocalContractsByShop(shop);
     if (contracts) {
@@ -127,7 +128,8 @@ export const runBillingAttempts = async () => {
 //   // loop through active shops
 //   shops.forEach(async (shop: string) => {
 //     // get token
-//     const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+// const shopData = await pgStorage.loadCurrentShop(shop);
+// const token = shopData.accessToken;
 //     // get all active contracts for shop
 //     const contracts = await pgStorage.getLocalContractsByShop(shop);
 //     if (contracts) {
@@ -157,7 +159,8 @@ export const runRenewalNotification = async () => {
   // loop through active shops
   shops.forEach(async (shop: string) => {
     // get token
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    const token = shopData.accessToken;
     // get all active contracts for shop
     const now = new Date();
     now.setDate(now.getDate() + 7);
@@ -199,7 +202,8 @@ export const runSubscriptionContractSync = async () => {
   shops.forEach(async (shop: string) => {
     try {
       logger.log('info', `Syncing contracts for shop: ${shop}`);
-      const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+      const shopData = await pgStorage.loadCurrentShop(shop);
+      const token = shopData.accessToken;
       await pgStorage.saveAllContracts(shop, token);
       return { msg: true };
     } catch (err: any) {
@@ -216,7 +220,8 @@ export const runCancellation = async () => {
   // loop through active shops
   shops.forEach(async (shop: string) => {
     // get token
-    const token = ACTIVE_SHOPIFY_SHOPS[shop].accessToken;
+    const shopData = await pgStorage.loadCurrentShop(shop);
+    const token = shopData.accessToken;
     // get all active contracts for shop
     const contracts = await pgStorage.getLocalContractsWithPaymentFailuresByShop(shop);
     if (contracts) {

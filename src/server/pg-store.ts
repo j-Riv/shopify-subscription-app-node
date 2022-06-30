@@ -55,7 +55,6 @@ class PgStore {
       [key: string]: {
         shop: string;
         scope: string;
-        accessToken: string;
       };
     }
 
@@ -66,10 +65,8 @@ class PgStore {
         shops[row.id] = {
           shop: row.id,
           scope: row.scope,
-          accessToken: row.access_token,
         };
       });
-      console.log('SHOPS', shops);
       return shops;
     } catch (err: any) {
       logger.log('error', err.message);
