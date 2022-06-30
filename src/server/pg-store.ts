@@ -17,7 +17,7 @@ import {
   generateNewBillingDate,
   sendMailGunPaymentFailure,
 } from './utils/index.js';
-import logger from './logger.js';
+import Logger from './logger.js';
 dotenv.config();
 
 class PgStore {
@@ -69,7 +69,7 @@ class PgStore {
       });
       return shops;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
       throw new Error(err);
     }
   };
@@ -93,7 +93,7 @@ class PgStore {
         return undefined;
       }
     } catch (err: any) {
-      logger.log('error', new Error(err));
+      Logger.log('error', new Error(err));
       throw new Error(err);
     }
   };
@@ -102,7 +102,7 @@ class PgStore {
    This removes a store from Active Shops.
   */
   deleteActiveShop = async (name: string) => {
-    logger.log('info', `Deleting active shop: ${name}`);
+    Logger.log('info', `Deleting active shop: ${name}`);
     const query = `
       DELETE FROM active_shops WHERE id = '${name}';
     `;
@@ -114,7 +114,7 @@ class PgStore {
         return false;
       }
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
       throw new Error(err);
     }
   };
@@ -149,7 +149,7 @@ class PgStore {
         }
       }
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
       throw new Error(err);
     }
   };
@@ -165,7 +165,7 @@ class PgStore {
   // create local contract
   createLocalContract = async (shop: string, contract: any) => {
     try {
-      logger.log('info', `Creating Local Contract: ${contract.id}`);
+      Logger.log('info', `Creating Local Contract: ${contract.id}`);
       // get interval and interval count
       const interval = contract.billingPolicy.interval;
       const intervalCount = contract.billingPolicy.intervalCount;
@@ -178,13 +178,13 @@ class PgStore {
       `;
       return await this.client.query(query);
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
   // udpate local contract
   updateLocalContract = async (shop: string, contract: any) => {
     try {
-      logger.log('info', `Updating Local Contract: ${contract.id}`);
+      Logger.log('info', `Updating Local Contract: ${contract.id}`);
       // get interval and interval count
       const interval = contract.billingPolicy.interval;
       const intervalCount = contract.billingPolicy.intervalCount;
@@ -197,13 +197,13 @@ class PgStore {
       `;
       return await this.client.query(query);
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
   // update payment failure
   updateLocalContractPaymentFailure = async (shop: string, id: string, reset: boolean) => {
     try {
-      logger.log('info', `Updating Local Contract: ${id} - Payment Failure`);
+      Logger.log('info', `Updating Local Contract: ${id} - Payment Failure`);
       let query: string;
       if (reset) {
         query = `
@@ -216,7 +216,7 @@ class PgStore {
       }
       return await this.client.query(query);
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -226,14 +226,14 @@ class PgStore {
   getLocalContractsByShop = async (shop: string) => {
     const today = new Date().toISOString().substring(0, 10) + 'T00:00:00Z';
     try {
-      logger.log('info', `Gettting all contracts for shop: ${shop}`);
+      Logger.log('info', `Gettting all contracts for shop: ${shop}`);
       const query = `
         SELECT * FROM subscription_contracts WHERE next_billing_date = '${today}' AND shop = '${shop}' AND status = 'ACTIVE' AND payment_failure_count < 2; 
       `;
       const res = await this.client.query(query);
       return res.rows;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -242,20 +242,20 @@ class PgStore {
   */
   getLocalContractsRenewingSoonByShop = async (shop: string, nextBillingDate: string) => {
     try {
-      logger.log('info', `Gettting all contracts for shop: ${shop}`);
+      Logger.log('info', `Gettting all contracts for shop: ${shop}`);
       const query = `
         SELECT * FROM subscription_contracts WHERE next_billing_date = '${nextBillingDate}' AND shop = '${shop}' AND status = 'ACTIVE' AND payment_failure_count < 2; 
       `;
       const res = await this.client.query(query);
       return res.rows;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
   getLocalContractsWithPaymentFailuresByShop = async (shop: string) => {
     try {
-      logger.log(
+      Logger.log(
         'info',
         `Gettting all contracts for shop: ${shop} with 2 or more payment failures`,
       );
@@ -265,7 +265,7 @@ class PgStore {
       const res = await this.client.query(query);
       return res.rows;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -274,13 +274,13 @@ class PgStore {
     body = JSON.parse(body);
 
     try {
-      logger.log('info', `Creating Contract`);
+      Logger.log('info', `Creating Contract`);
       const client: ApolloClient<unknown> = createClient(shop, token);
       const contract = await getSubscriptionContract(client, body.admin_graphql_api_id);
       const res = await this.createLocalContract(shop, contract);
       return res ? res.rowCount > 0 : false;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -289,7 +289,7 @@ class PgStore {
     const id = body.admin_graphql_api_id;
 
     try {
-      logger.log('info', `Updating Contract: ${id}`);
+      Logger.log('info', `Updating Contract: ${id}`);
       const exists = await this.getLocalContract(id);
       const client: ApolloClient<unknown> = createClient(shop, token);
       const contract = await getSubscriptionContract(client, body.admin_graphql_api_id);
@@ -306,7 +306,7 @@ class PgStore {
       }
       return res.rowCount > 0;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -320,7 +320,7 @@ class PgStore {
     const id = body.admin_graphql_api_subscription_contract_id;
 
     try {
-      logger.log('info', `Updating Next Billing Date: ${id}`);
+      Logger.log('info', `Updating Next Billing Date: ${id}`);
       // create apollo client
       const client: ApolloClient<unknown> = createClient(shop, token);
       // check if contract exists
@@ -330,7 +330,7 @@ class PgStore {
         const res = await getSubscriptionContract(client, id);
         contract = (await this.createLocalContract(shop, res)) as any;
       } else {
-        logger.log('info', `Contract exits lets update it: ${id}`);
+        Logger.log('info', `Contract exits lets update it: ${id}`);
         // update paymen method failure
         await this.updateLocalContractPaymentFailure(shop, id, true);
       }
@@ -339,26 +339,26 @@ class PgStore {
       const intervalCount = contract.rows[0].interval_count;
       // generate next billing date
       const nextBillingDate = generateNextBillingDate(interval, intervalCount);
-      logger.log(
+      Logger.log(
         'info',
         `Interval -> ${interval} Count -> ${intervalCount} Next Billing Date -> ${nextBillingDate}`,
       );
       // update next billing date on shopify get results use results to update local db.
       // get draft id
       const draftId = await updateSubscriptionContract(client, id);
-      logger.log('info', `Draft Id: ${draftId}`);
+      Logger.log('info', `Draft Id: ${draftId}`);
       // create input & update draft
       const input = {
         nextBillingDate: nextBillingDate,
       };
       const updatedDraftId = await updateSubscriptionDraft(client, draftId, input);
-      logger.log('info', `Updated Draft Id: ${updatedDraftId}`);
+      Logger.log('info', `Updated Draft Id: ${updatedDraftId}`);
       // commit changes to draft
       const contractId = await commitSubscriptionDraft(client, updatedDraftId);
-      logger.log('info', `Contract Id: ${contractId}`);
+      Logger.log('info', `Contract Id: ${contractId}`);
       return contractId;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -377,7 +377,7 @@ class PgStore {
     const id = body.admin_graphql_api_subscription_contract_id;
 
     try {
-      logger.log('info', `Updating Next Billing Date: ${id}`);
+      Logger.log('info', `Updating Next Billing Date: ${id}`);
       // create apollo client
       const client: ApolloClient<unknown> = createClient(shop, token);
       // check if contract exists
@@ -387,7 +387,7 @@ class PgStore {
         const res = await getSubscriptionContract(client, id);
         contract = (await this.createLocalContract(shop, res)) as any;
       } else {
-        logger.log('info', `Contract exits lets update it: ${id}`);
+        Logger.log('info', `Contract exits lets update it: ${id}`);
         // update paymen method failure
         await this.updateLocalContractPaymentFailure(shop, id, false);
         if (updatePayment) {
@@ -396,20 +396,20 @@ class PgStore {
       }
       // generate next billing date
       const nextBillingDate = generateNewBillingDate();
-      logger.log('info', `Next Billing Date -> ${nextBillingDate}`);
+      Logger.log('info', `Next Billing Date -> ${nextBillingDate}`);
       // update next billing date on shopify get results use results to update local db.
       // get draft id
       const draftId = await updateSubscriptionContract(client, id);
-      logger.log('info', `Draft Id: ${draftId}`);
+      Logger.log('info', `Draft Id: ${draftId}`);
       // create input & update draft
       const input = {
         nextBillingDate: nextBillingDate,
       };
       const updatedDraftId = await updateSubscriptionDraft(client, draftId, input);
-      logger.log('info', `Updated Draft Id: ${updatedDraftId}`);
+      Logger.log('info', `Updated Draft Id: ${updatedDraftId}`);
       // commit changes to draft
       const subscriptionContract = await commitSubscriptionDraft(client, updatedDraftId);
-      logger.log('info', `Contract Id: ${subscriptionContract.id}`);
+      Logger.log('info', `Contract Id: ${subscriptionContract.id}`);
       // send email notification
       const email = subscriptionContract.customer.email;
       const firstName = subscriptionContract.customer.firstName;
@@ -417,7 +417,7 @@ class PgStore {
 
       return subscriptionContract.id;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -432,7 +432,7 @@ class PgStore {
       const customerId = await updatePaymentMethod(client, paymentMethodId);
       return customerId;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -444,7 +444,7 @@ class PgStore {
     const data = JSON.parse(body);
     const { status } = data;
     try {
-      logger.log('info', `Getting all contracts by status: ${status}.`);
+      Logger.log('info', `Getting all contracts by status: ${status}.`);
 
       const query = `SELECT contract FROM subscription_contracts WHERE shop = '${shop}' AND status = '${status}';`;
       const res = await this.client.query(query);
@@ -452,7 +452,7 @@ class PgStore {
 
       // create apollo client
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -461,7 +461,7 @@ class PgStore {
   */
   saveAllContracts = async (shop: string, token: string) => {
     try {
-      logger.log('info', `Saving all contracts.`);
+      Logger.log('info', `Saving all contracts.`);
       // create apollo client
       const client: ApolloClient<unknown> = createClient(shop, token);
       const moveAlong = async (after?: string) => {
@@ -535,7 +535,7 @@ class PgStore {
       const done = await getContracts();
       return done;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 
@@ -550,7 +550,7 @@ class PgStore {
       const res = await this.client.query(query);
       return res.rows;
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   };
 }

@@ -4,7 +4,7 @@
 // import { Session } from '@shopify/shopify-api/dist/auth/session';
 import { createClient } from 'redis';
 import { Session } from '@shopify/shopify-api/dist/auth/session/index.js';
-import logger from './logger.js';
+import Logger from './logger.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -17,7 +17,7 @@ class RedisStore {
     });
     this.client.on('error', (err) => {
       console.log('Redis Client Error', err);
-      logger.log('error', err);
+      Logger.log('error', err);
     });
     this.client.connect();
   }
@@ -35,7 +35,7 @@ class RedisStore {
       return await this.client.set(session.id, JSON.stringify(session));
     } catch (err) {
       // throw errors, and handle them gracefully in your application
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
       throw new Error(err);
     }
   }
@@ -63,7 +63,7 @@ class RedisStore {
         return undefined;
       }
     } catch (err) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
       throw new Error(err);
     }
   }
@@ -79,7 +79,7 @@ class RedisStore {
       // This method returns a boolean (true if successful, false if not)
       return await this.client.del(id);
     } catch (err) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
       throw new Error(err);
     }
   }

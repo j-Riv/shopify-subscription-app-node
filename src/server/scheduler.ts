@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import schedule from 'node-schedule';
-import PgStore from './pg-store';
+import PgStore from './pg-store.js';
 import 'isomorphic-fetch';
 import {
   createClient,
@@ -10,9 +10,9 @@ import {
   updateSubscriptionDraft,
   commitSubscriptionDraft,
   getProductVariantById,
-} from './handlers';
-import { sendMailGunPause, sendMailGunRenew } from './utils';
-import logger from './logger';
+} from './handlers/index.js';
+import { sendMailGunPause, sendMailGunRenew } from './utils/index.js';
+import Logger from './logger.js';
 import { SubscriptionContract, SubscriptionLine } from './types/subscriptions';
 dotenv.config();
 
@@ -20,7 +20,7 @@ const pgStorage = new PgStore();
 
 export const scheduler = () => {
   runBillingAttempts();
-  // logger.log('info', `Scheduler initialized ...`);
+  // Logger.log('info', `Scheduler initialized ...`);
   const every10sec = '*/10 * * * *'; // every 10 seconds for testing
   const everymin = '*/1 * * * *'; // every min
   const everyday3am = '0 0 3 * * *'; // every day at 1 am
@@ -30,23 +30,23 @@ export const scheduler = () => {
   const everyhour = '0 0 */2 * * *'; // every 2 hours
 
   const scheduleJob = schedule.scheduleJob(everyday6am, async function () {
-    logger.log('info', `Running Billing Attempt Rule: ${everyday6am}`);
+    Logger.log('info', `Running Billing Attempt Rule: ${everyday6am}`);
     runBillingAttempts();
   });
   const syncJob = schedule.scheduleJob(everyhour, async function () {
-    logger.log('info', `Running Contract Sync Rule: ${everyhour}`);
+    Logger.log('info', `Running Contract Sync Rule: ${everyhour}`);
     runSubscriptionContractSync();
   });
 
   const cleanupJob = schedule.scheduleJob(everyday3am, async function () {
-    logger.log('info', `Running Cleanup Sync Rule: ${everyday3am}`);
+    Logger.log('info', `Running Cleanup Sync Rule: ${everyday3am}`);
     runCancellation();
   });
 
   // const renewalNotificationJob = schedule.scheduleJob(
   //   everyday10am,
   //   async function () {
-  //     logger.log(
+  //     Logger.log(
   //       'info',
   //       `Running Renewal Notification Sync Rule: ${everyday10am}`
   //     );
@@ -96,7 +96,7 @@ export const runBillingAttempts = async () => {
             // create billing attempt
             if (oosProducts.length === 0) {
               const billingAttempt = await createSubscriptionBillingAttempt(client, contract.id);
-              logger.log('info', `Created Billing Attempt: ${billingAttempt}`);
+              Logger.log('info', `Created Billing Attempt: ${billingAttempt}`);
             } else {
               // pause subscription and send email
               // update subscription
@@ -113,7 +113,7 @@ export const runBillingAttempts = async () => {
             }
           }
         } catch (err: any) {
-          logger.log('error', err.message);
+          Logger.log('error', err.message);
         }
       });
     }
@@ -142,9 +142,9 @@ export const runBillingAttempts = async () => {
 //             client,
 //             contract.id
 //           );
-//           logger.log('info', `Created Billing Attempt: ${billingAttempt}`);
+//           Logger.log('info', `Created Billing Attempt: ${billingAttempt}`);
 //         } catch (err: any) {
-//           logger.log('error', err.message);
+//           Logger.log('error', err.message);
 //         }
 //       });
 //     }
@@ -187,7 +187,7 @@ export const runRenewalNotification = async () => {
             nextBillingDate,
           );
         } catch (err: any) {
-          logger.log('error', err.message);
+          Logger.log('error', err.message);
         }
       });
     }
@@ -201,13 +201,13 @@ export const runSubscriptionContractSync = async () => {
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
   shops.forEach(async (shop: string) => {
     try {
-      logger.log('info', `Syncing contracts for shop: ${shop}`);
+      Logger.log('info', `Syncing contracts for shop: ${shop}`);
       const shopData = await pgStorage.loadCurrentShop(shop);
       const token = shopData.accessToken;
       await pgStorage.saveAllContracts(shop, token);
       return { msg: true };
     } catch (err: any) {
-      logger.log('error', err.message);
+      Logger.log('error', err.message);
     }
   });
 };
@@ -232,18 +232,18 @@ export const runCancellation = async () => {
           const client = createClient(shop, token);
           // get draft id
           const draftId = await updateSubscriptionContract(client, contract.id);
-          logger.log('info', `Draft Id: ${draftId}`);
+          Logger.log('info', `Draft Id: ${draftId}`);
           // create input & update draft
           const input = {
             status: 'CANCELLED',
           };
           const updatedDraftId = await updateSubscriptionDraft(client, draftId, input);
-          logger.log('info', `Updated Draft Id: ${updatedDraftId}`);
+          Logger.log('info', `Updated Draft Id: ${updatedDraftId}`);
           // commit changes to draft
           const contractId = await commitSubscriptionDraft(client, updatedDraftId);
-          logger.log('info', `Contract Id: ${contractId}`);
+          Logger.log('info', `Contract Id: ${contractId}`);
         } catch (err: any) {
-          logger.log('error', err.message);
+          Logger.log('error', err.message);
         }
       });
     }
