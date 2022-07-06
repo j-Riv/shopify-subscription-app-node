@@ -7,6 +7,7 @@ import { Shopify, ApiVersion } from '@shopify/shopify-api';
 import RedisStore from './redis-store.js';
 import PgStore from './pg-store.js';
 import Logger from './logger.js';
+import { scheduler } from './scheduler.js';
 import 'dotenv/config';
 
 import applyAuthMiddleware from './middleware/auth.js';
@@ -57,6 +58,9 @@ Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
     pgStorage.deleteActiveShop(shop);
   },
 });
+
+// init scheduler
+scheduler();
 
 // webhook handlers
 Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_CREATE', {

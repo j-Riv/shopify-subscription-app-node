@@ -47,3 +47,18 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Docker Persistent Data
+database.env
+data/postgres/*
+!data/postgres/.gitkeep
+data/redis/*
+!data/redis/redis.conf
+!data/redis/.gitkeep
+data/traefik/*
+!data/traefik/.gitkeep
+app/app_proxy/*
+
+NOTES.md
+CHANGES.md
+/app/server/config/
