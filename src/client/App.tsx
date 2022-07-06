@@ -15,6 +15,7 @@ import SellingPlanGroups from './routes/selling-plan-groups';
 import SellingPlanGroup from './routes/selling-plan-group';
 import Search from './routes/search';
 import Subscriptions from './routes/subscriptions';
+import './app.css';
 
 export function userLoggedInFetch(app: ClientApplication<AppBridgeState>) {
   const fetchFunction = authenticatedFetch(app);

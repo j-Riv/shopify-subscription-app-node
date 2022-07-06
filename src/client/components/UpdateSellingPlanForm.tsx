@@ -23,7 +23,7 @@ function UpdateSellingPlanForm(props: Props) {
   const [planOptions, setPlanOptions] = useState<string>(initialOptions);
   const [planIntervalOption, setPlanIntervalOption] = useState<string>(initialIntervalOption);
   const [planIntervalCount, setPlanIntervalCount] = useState<string>(initialIntervalCount);
-  const [intervalCount, setIntervalCount] = useState<string>(initialIntervalCount);
+  // const [intervalCount, setIntervalCount] = useState<string>(initialIntervalCount);
   const [percentOff, setPercentOff] = useState<string>(initialDiscountPercentage);
 
   const handlePlanName = (name: string) => {
@@ -90,12 +90,14 @@ function UpdateSellingPlanForm(props: Props) {
             onChange={(value) => handlePlanName(value)}
             label="Plan Name"
             type="text"
+            autoComplete=""
           />
           <TextField
             value={planOptions}
             onChange={(value) => handlePlanOptions(value)}
             label="Options"
             type="text"
+            autoComplete=""
           />
         </Layout.Section>
         <Layout.Section>
@@ -126,6 +128,7 @@ function UpdateSellingPlanForm(props: Props) {
             onChange={(value) => handlePercentOff(value)}
             label="Percent Off (%)"
             type="number"
+            autoComplete=""
           />
         </Layout.Section>
       </Layout>

@@ -36,6 +36,8 @@ function EditSubscription() {
   // State
   const [status, setStatus] = useState<string>('');
   const [contractId, setContractId] = useState<string>('');
+  const [interval, setInterval] = useState<string>('');
+  const [intervalCount, setIntervalCount] = useState<string>('');
   const [nextBillingDate, setNextBillingDate] = useState<string>('');
   const [lineItems, setLineItems] = useState<Line[]>([]);
   const [lineItem, setLineItem] = useState<string>('');
@@ -75,6 +77,8 @@ function EditSubscription() {
       const d = data.subscriptionContract;
       if (d.status) setStatus(d.status);
       if (d.id) setContractId(d.id);
+      if (d.billingPolicy.interval) setInterval(d.billingPolicy.interval);
+      if (d.billingPolicy.intervalCount) setIntervalCount(String(d.billingPolicy.intervalCount));
       if (d.nextBillingDate.split('T')[0]) setNextBillingDate(d.nextBillingDate.split('T')[0]);
       if (d.lines.edges[0].node.productId) setLineItem(d.lines.edges[0].node.productId);
       if (d.lines.edges[0].node.id) setLineId(d.lines.edges[0].node.id);
@@ -100,6 +104,14 @@ function EditSubscription() {
     },
     onCompleted: (data) => setInitialData(data),
   });
+
+  const handleIntervalChange = (value: string) => {
+    setInterval(value);
+  };
+
+  const handleIntervalCountChange = (value: string) => {
+    setIntervalCount(value);
+  };
 
   const handleNextBillingDateChange = (date: string) => {
     setNextBillingDate(date);
@@ -181,6 +193,51 @@ function EditSubscription() {
                 </Stack>
               </Card>
             </Layout.AnnotatedSection>
+
+            <Layout.AnnotatedSection
+              title="Interval"
+              description="Update Interval and Interval Count"
+            >
+              <Card sectioned>
+                <Select
+                  label="Interval"
+                  options={[
+                    { label: 'Weekly', value: 'WEEK' },
+                    { label: 'Monthly', value: 'MONTH' },
+                  ]}
+                  onChange={(value) => handleIntervalChange(value)}
+                  value={interval}
+                />
+                <TextField
+                  value={intervalCount}
+                  onChange={(count) => handleIntervalCountChange(count)}
+                  label="Interval Count"
+                  type="number"
+                  autoComplete=""
+                />
+                <Stack distribution="trailing">
+                  <UpdateSubscriptionButton
+                    contractId={contractId}
+                    input={{
+                      deliveryPolicy: {
+                        interval: interval,
+                        intervalCount: Number(intervalCount),
+                      },
+                      billingPolicy: {
+                        interval: interval,
+                        intervalCount: Number(intervalCount),
+                      },
+                    }}
+                    lineId={null}
+                    toggleActive={toggleActive}
+                    setMsg={setMsg}
+                    setToastError={setToastError}
+                    refetch={refetch}
+                  />
+                </Stack>
+              </Card>
+            </Layout.AnnotatedSection>
+
             <Layout.AnnotatedSection
               title="Next Billing Date"
               description="Change / Update Next Billing Date"

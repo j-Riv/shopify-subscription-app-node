@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Button,
   Card,
@@ -8,7 +9,6 @@ import {
   SkeletonBodyText,
   SkeletonPage,
   Stack,
-  TextStyle,
 } from '@shopify/polaris';
 import { TitleBar } from '@shopify/app-bridge-react';
 
@@ -30,6 +30,19 @@ function LoadingSubscription() {
               <SkeletonBodyText />
             </Card>
           </Layout.Section>
+          <Layout.AnnotatedSection
+            title="Interval"
+            description="Update Interval and Interval Count"
+          >
+            <Card sectioned>
+              <SkeletonBodyText />
+              <Stack distribution="trailing">
+                <Button primary submit>
+                  Update
+                </Button>
+              </Stack>
+            </Card>
+          </Layout.AnnotatedSection>
           <Layout.AnnotatedSection
             title="Next Billing Date"
             description="Change / Update Next Billing Date"
