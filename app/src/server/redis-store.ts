@@ -12,9 +12,15 @@ class RedisStore {
   [x: string]: any;
   constructor() {
     // Create a new redis client and connect to the server
-    this.client = createClient({
-      url: 'redis://localhost:6379',
-    });
+    if (process.env.DOCKER === 'true') {
+      this.client = createClient({
+        url: 'redis://redis:6379',
+      });
+    } else {
+      this.client = createClient({
+        url: 'redis://localhost:6379',
+      });
+    }
     this.client.on('error', (err) => {
       console.log('Redis Client Error', err);
       Logger.log('error', err);

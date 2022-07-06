@@ -51,7 +51,6 @@ Temporary Items
 # Docker Persistent Data
 database.env
 data/postgres/*
-!data/postgres/.gitkeep
 data/redis/*
 !data/redis/redis.conf
 !data/redis/.gitkeep
