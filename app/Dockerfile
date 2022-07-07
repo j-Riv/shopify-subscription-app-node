@@ -17,4 +17,4 @@ RUN npm install
 # start app
 RUN npm run build
 EXPOSE 8081
-CMD ["npm", "serve"]
+CMD ["npm", "run", "serve"]
