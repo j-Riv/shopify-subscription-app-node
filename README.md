@@ -54,9 +54,10 @@ CREATE TABLE active_shops (id varchar NOT NULL PRIMARY KEY, scope varchar NOT NU
 CREATE TABLE sessions (id varchar NOT NULL PRIMARY KEY, session json NOT NULL);
 # Create Contracts Table
 CREATE TABLE subscription_contracts (id varchar NOT NULL PRIMARY KEY, shop varchar NOT NULL, status varchar NOT NULL, next_billing_date date NOT NULL, interval varchar NOT NULL, interval_count integer NOT NULL, payment_failure_count integer NOT NULL DEFAULT 0, contract json NOT NULL);
+```
 
 
-Build App Image
+# Build App Image
 ```bash
 docker build --tag jriv/subscriptions:latest .
 ````
