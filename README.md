@@ -6,19 +6,20 @@
 
 ## Environmental Variables
 
-/app/.env
-
+.env 
 ```javascript
-SHOPIFY_API_KEY = 'YOUR_SHOPIFY_API_KEY';
-SHOPIFY_API_SECRET = 'YOUR_SHOPIFY_SECRET';
-SHOP = 'my-shop-name.myshopify.com';
-SCOPES = 'SHOPIFY_API_SCOPES';
-HOST = 'YOUR_TUNNEL_URL';
-PG_DB = 'DATABASE_NAME';
-PG_HOST = 'DATABASE_HOST';
-PG_USER = 'DATABASE_USER';
-PG_PASSWORD = 'DATABASE_PASSWORD';
-PG_PORT = 'DATABASE_PORT';
+DOMAIN_NAME=DOMAIN_NAME
+GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET
+OAUTH_SECRET=OAUTH_SECRET
+EMAIL_WHITELIST=name@example.com,name2@example.com
+```
+
+database.env
+```javascript
+POSTGRES_USER=THE_USERNAME
+POSTGRES_PASSWORD=THE_PASSWORD
+POSTGRES_DB=THE_DATABASE_NAME
 ```
 
 ## Setup
@@ -27,21 +28,13 @@ Install Docker.
 
 Create Data `/data` directory for persistent data.
 
-Create database.env
-
-```bash
-POSTGRES_USER=THE_USERNAME
-POSTGRES_PASSWORD=THE_PASSWORD
-POSTGRES_DB=THE_DATABASE_NAME
-```
-
 ```bash
 docker-compose up -d
 ```
 
 Connect to Postgres Container & Create Tables
 
-````sql
+```sql
 # using psql
 psql -h localhost -U <username> -d postgres
 # Or Create a new Bash Session inside the container
@@ -56,8 +49,7 @@ CREATE TABLE sessions (id varchar NOT NULL PRIMARY KEY, session json NOT NULL);
 CREATE TABLE subscription_contracts (id varchar NOT NULL PRIMARY KEY, shop varchar NOT NULL, status varchar NOT NULL, next_billing_date date NOT NULL, interval varchar NOT NULL, interval_count integer NOT NULL, payment_failure_count integer NOT NULL DEFAULT 0, contract json NOT NULL);
 ```
 
-
-# Build App Image
+## Build App Image
 ```bash
 docker build --tag jriv/subscriptions:latest .
 ````
@@ -135,12 +127,3 @@ docker system prune
 ## Logs
 
 Logs can be found at /logs
-
-## Tests
-
-- Server callback test is failing, the auth flow was changed to handle both `online` and `offline` tokens. The test will have to be rewritten.
-- GraphQL tests are failing, don't understand why, will try to fix when I get the chance.
-
-## Shopify Embedded App Navigation
-
-You can configure the apps navigation from App > App setup > Embed your app in Shopify Admin > Navigation > Configure.
