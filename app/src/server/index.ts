@@ -186,6 +186,18 @@ export const createServer = async (
   proxyRoutes(app);
 
   // move
+  app.get('/sync', verifyRequest(app), async (req, res, next) => {
+    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
+    const { shop, accessToken } = session;
+    try {
+      Logger.log('info', `Syncing contracts for shop: ${shop}`);
+      const response = await pgStorage.saveAllContracts(shop, accessToken);
+      res.status(200).json(response);
+    } catch (err: any) {
+      Logger.log('error', err.message);
+    }
+  });
+
   app.post('/contracts-by-status', verifyRequest(app), async (req, res, next) => {
     const session = await Shopify.Utils.loadCurrentSession(req, res, true);
     const { shop, accessToken } = session;
