@@ -16,6 +16,6 @@ RUN npm install
 
 # start app
 RUN npm run build
-ENV NODE_ENV = production
+
 EXPOSE 8081
 CMD ["npm", "run", "serve"]
