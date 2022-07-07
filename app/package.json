@@ -12,7 +12,7 @@
     "dev": "cross-env NODE_ENV=development nodemon dist/server/index.js --watch ./dist/server",
     "prepare": "husky install",
     "preserve": "npm run build",
-    "serve": "cross-env NODE_ENV=production tsc && node dist/server/index.js",
+    "serve": "cross-env NODE_ENV=production node dist/server/index.js",
     "start": "npm run serve",
     "test": "vitest --reporter=verbose"
   },

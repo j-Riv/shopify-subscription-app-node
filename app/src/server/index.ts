@@ -186,6 +186,18 @@ export const createServer = async (
   proxyRoutes(app);
 
   // move
+  app.get('/sync', verifyRequest(app), async (req, res, next) => {
+    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
+    const { shop, accessToken } = session;
+    try {
+      Logger.log('info', `Syncing contracts for shop: ${shop}`);
+      const response = await pgStorage.saveAllContracts(shop, accessToken);
+      res.status(200).json(response);
+    } catch (err: any) {
+      Logger.log('error', err.message);
+    }
+  });
+
   app.post('/contracts-by-status', verifyRequest(app), async (req, res, next) => {
     const session = await Shopify.Utils.loadCurrentSession(req, res, true);
     const { shop, accessToken } = session;
@@ -238,6 +250,7 @@ export const createServer = async (
    */
   let vite: ViteDevServer;
   if (!isProd) {
+    console.log('DEV SERVER');
     vite = await import('vite').then(({ createServer }) =>
       createServer({
         root,
@@ -256,6 +269,7 @@ export const createServer = async (
     );
     app.use(vite.middlewares);
   } else {
+    console.log('PROD SERVER');
     const compression = await import('compression').then(({ default: fn }) => fn);
     const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
     const fs = await import('fs');
