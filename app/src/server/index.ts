@@ -238,6 +238,7 @@ export const createServer = async (
    */
   let vite: ViteDevServer;
   if (!isProd) {
+    console.log('DEV SERVER');
     vite = await import('vite').then(({ createServer }) =>
       createServer({
         root,
@@ -256,6 +257,7 @@ export const createServer = async (
     );
     app.use(vite.middlewares);
   } else {
+    console.log('PROD SERVER');
     const compression = await import('compression').then(({ default: fn }) => fn);
     const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
     const fs = await import('fs');

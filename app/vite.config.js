@@ -25,4 +25,8 @@ export default defineConfig({
       clientPort: 443,
     },
   },
+  optimizeDeps: {
+    include: ['react/jsx-runtime'],
+  },
+  build: { minify: true },
 });
