@@ -5,6 +5,7 @@ import {
   Frame,
   Layout,
   Page,
+  Stack,
   TextField,
   TextStyle,
   Thumbnail,
@@ -326,18 +327,20 @@ function SellingPlanGroup() {
               })}
             </Layout.AnnotatedSection>
             <Layout.Section>
-              <UpdateSellingPlanGroupButton
-                id={data.sellingPlanGroup.id}
-                groupName={groupName}
-                groupDescription={groupDescription}
-                groupOptions={groupOptions}
-                merchantCode={merchantCode}
-                sellingPlans={sellingPlans}
-                toggleActive={toggleActive}
-                setMsg={setMsg}
-                setToastError={setToastError}
-                refetch={refetch}
-              />
+              <Stack distribution="trailing">
+                <UpdateSellingPlanGroupButton
+                  id={data.sellingPlanGroup.id}
+                  groupName={groupName}
+                  groupDescription={groupDescription}
+                  groupOptions={groupOptions}
+                  merchantCode={merchantCode}
+                  sellingPlans={sellingPlans}
+                  toggleActive={toggleActive}
+                  setMsg={setMsg}
+                  setToastError={setToastError}
+                  refetch={refetch}
+                />
+              </Stack>
             </Layout.Section>
           </Layout>
           {toastMarkup}
