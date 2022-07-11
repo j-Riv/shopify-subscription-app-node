@@ -17,8 +17,14 @@ interface Props {
   refetch: () => void;
 }
 
-function RemoveLineFromSubscriptionButton(props: Props) {
-  const { contractId, lineId, toggleActive, setMsg, setToastError, refetch } = props;
+const RemoveLineFromSubscriptionButton = ({
+  contractId,
+  lineId,
+  toggleActive,
+  setMsg,
+  setToastError,
+  refetch,
+}: Props) => {
   const [loading, setLoading] = useState<boolean>(false);
   // Update subscription contract -> draft id
   const [updateSubscriptionContract] = useMutation(UPDATE_SUBSCRIPTION_CONTRACT, {
@@ -110,6 +116,6 @@ function RemoveLineFromSubscriptionButton(props: Props) {
       Remove
     </Button>
   );
-}
+};
 
 export default RemoveLineFromSubscriptionButton;

@@ -46,7 +46,7 @@ interface SellingPlan {
   ];
 }
 
-function UpdateSellingPlanGroupButton(props: Props) {
+const UpdateSellingPlanGroupButton = (props: Props) => {
   const { setMsg, toggleActive, setToastError, refetch } = props;
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -160,6 +160,6 @@ function UpdateSellingPlanGroupButton(props: Props) {
       Update
     </Button>
   );
-}
+};
 
 export default UpdateSellingPlanGroupButton;

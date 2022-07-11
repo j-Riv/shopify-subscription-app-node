@@ -24,11 +24,7 @@ interface Props {
   adminRedirect: (url: string) => void;
 }
 
-function SubscriptionInformation(props: Props) {
-  const { data, adminRedirect } = props;
-
-  console.log('DATA', data);
-
+const SubscriptionInformation = ({ data, adminRedirect }: Props) => {
   return (
     <Card title="Subscription" sectioned>
       <Container>
@@ -88,6 +84,6 @@ function SubscriptionInformation(props: Props) {
       </Container>
     </Card>
   );
-}
+};
 
 export default SubscriptionInformation;

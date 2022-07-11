@@ -22,9 +22,7 @@ interface Props {
   };
 }
 
-function CustomerInformation(props: Props) {
-  const { data } = props;
-
+const CustomerInformation = ({ data }: Props) => {
   return (
     <Card title="Customer" sectioned>
       <Container>
@@ -46,6 +44,6 @@ function CustomerInformation(props: Props) {
       </Container>
     </Card>
   );
-}
+};
 
 export default CustomerInformation;

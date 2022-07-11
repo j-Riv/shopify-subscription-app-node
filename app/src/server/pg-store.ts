@@ -544,8 +544,11 @@ class PgStore {
   */
   getAllPaymentFailures = async (shop: string) => {
     try {
+      // const query = `
+      //   SELECT contract FROM subscription_contracts WHERE shop = '${shop}' AND (contract ->> 'status') = 'ACTIVE' AND (contract ->> 'lastPaymentStatus') <> 'SUCCEEDED';
+      // `;
       const query = `
-        SELECT contract FROM subscription_contracts WHERE shop = '${shop}' AND (contract ->> 'status') = 'ACTIVE' AND (contract ->> 'lastPaymentStatus') <> 'SUCCEEDED'; 
+        SELECT contract FROM subscription_contracts WHERE shop = '${shop}' AND (contract ->> 'status') = 'ACTIVE'; 
       `;
       const res = await this.client.query(query);
       return res.rows;

@@ -12,7 +12,7 @@ import {
 } from '@shopify/polaris';
 import { TitleBar } from '@shopify/app-bridge-react';
 
-function LoadingSubscription() {
+const LoadingSubscription = () => {
   return (
     <SkeletonPage breadcrumbs={true} title="Edit Subscription">
       <Frame>
@@ -83,6 +83,6 @@ function LoadingSubscription() {
       </Frame>
     </SkeletonPage>
   );
-}
+};
 
 export default LoadingSubscription;

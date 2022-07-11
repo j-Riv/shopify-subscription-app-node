@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Card,
   DataTable,
@@ -9,9 +10,11 @@ import {
 } from '@shopify/polaris';
 import { TitleBar } from '@shopify/app-bridge-react';
 
-function LoadingSellingPlans(props: { tableRows: number }) {
-  const { tableRows } = props;
+interface Props {
+  tableRows: number;
+}
 
+const LoadingSellingPlans = ({ tableRows }: Props) => {
   return (
     <SkeletonPage title="Selling Plan Groups">
       <Frame>
@@ -37,6 +40,6 @@ function LoadingSellingPlans(props: { tableRows: number }) {
       </Frame>
     </SkeletonPage>
   );
-}
+};
 
 export default LoadingSellingPlans;

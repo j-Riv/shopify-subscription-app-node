@@ -10,9 +10,11 @@ import {
 } from '@shopify/polaris';
 import { TitleBar } from '@shopify/app-bridge-react';
 
-function LoadingIndex(props: { tableRows: number }) {
-  const { tableRows } = props;
+interface Props {
+  tableRows: number;
+}
 
+const LoadingIndex = ({ tableRows }: Props) => {
   return (
     <SkeletonPage title="Dashboard">
       <Frame>
@@ -50,6 +52,6 @@ function LoadingIndex(props: { tableRows: number }) {
       </Frame>
     </SkeletonPage>
   );
-}
+};
 
 export default LoadingIndex;

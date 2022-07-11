@@ -1,9 +1,10 @@
+import React from 'react';
 import {
   Card,
-  Button,
   Frame,
   Layout,
   Loading,
+  PageActions,
   SkeletonBodyText,
   SkeletonPage,
   SkeletonThumbnail,
@@ -17,7 +18,7 @@ const Product = styled.div`
   align-items: center;
 `;
 
-function LoadingSellingPlan() {
+const LoadingSellingPlan = () => {
   return (
     <SkeletonPage breadcrumbs={true} title="Seling Plan Group">
       <Frame>
@@ -43,24 +44,68 @@ function LoadingSellingPlan() {
             <Card sectioned>
               <Layout>
                 <Layout.Section>
-                  <SkeletonBodyText lines={1} />
-                  <SkeletonBodyText lines={1} />
-                  <SkeletonBodyText lines={1} />
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
                 </Layout.Section>
                 <Layout.Section>
-                  <SkeletonBodyText lines={1} />
-                  <SkeletonBodyText lines={1} />
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                </Layout.Section>
+              </Layout>
+            </Card>
+            <Card sectioned>
+              <Layout>
+                <Layout.Section>
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
                 </Layout.Section>
                 <Layout.Section>
-                  <Button>Update</Button>
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                </Layout.Section>
+              </Layout>
+            </Card>
+            <Card sectioned>
+              <Layout>
+                <Layout.Section>
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                </Layout.Section>
+                <Layout.Section>
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                </Layout.Section>
+              </Layout>
+            </Card>
+            <Card sectioned>
+              <Layout>
+                <Layout.Section>
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
+                </Layout.Section>
+                <Layout.Section>
+                  <SkeletonBodyText lines={3} />
+                  <SkeletonBodyText lines={3} />
                 </Layout.Section>
               </Layout>
             </Card>
           </Layout.AnnotatedSection>
         </Layout>
+        <PageActions
+          primaryAction={{
+            content: 'Update',
+          }}
+          secondaryActions={{
+            content: 'Cancel',
+          }}
+        />
       </Frame>
     </SkeletonPage>
   );
-}
+};
 
 export default LoadingSellingPlan;

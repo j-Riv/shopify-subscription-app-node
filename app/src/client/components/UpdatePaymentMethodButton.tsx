@@ -11,8 +11,7 @@ interface Props {
   refetch: () => void;
 }
 
-function UpdatePaymentMethodButton(props: Props) {
-  const { id, toggleActive, setMsg, setToastError, refetch } = props;
+const UpdatePaymentMethodButton = ({ id, toggleActive, setMsg, setToastError, refetch }: Props) => {
   const [loading, setLoading] = useState<boolean>(false);
   // send the payment update email, update toast message and make it active
   const [updatePaymentMethod] = useMutation(UPDATE_PAYMENT_METHOD, {
@@ -44,6 +43,6 @@ function UpdatePaymentMethodButton(props: Props) {
       Send
     </Button>
   );
-}
+};
 
 export default UpdatePaymentMethodButton;
