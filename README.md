@@ -122,6 +122,9 @@ docker-compose up -d
 docker system prune
 ```
 
+## App Proxy
+App Proxy will be served from `/proxy/build`.
+
 ## Logs
 
 Logs can be found at /logs

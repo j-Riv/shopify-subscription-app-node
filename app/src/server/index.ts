@@ -50,7 +50,7 @@ Shopify.Context.initialize({
 // persist this object in your app.
 // const ACTIVE_SHOPIFY_SHOPS = {};
 const ACTIVE_SHOPIFY_SHOPS = await pgStorage.loadActiveShops();
-console.log('LOADING ACTIVE SHOPS FROM DB', ACTIVE_SHOPIFY_SHOPS);
+// console.log('LOADING ACTIVE SHOPS FROM DB', ACTIVE_SHOPIFY_SHOPS);
 Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
@@ -136,11 +136,11 @@ export const createServer = async (
   isProd = process.env.NODE_ENV === 'production',
 ) => {
   const app = express();
-  console.log('SETTING APP VALUES', ACTIVE_SHOPIFY_SHOPS);
+  // console.log('SETTING APP VALUES', ACTIVE_SHOPIFY_SHOPS);
   app.set('top-level-oauth-cookie', TOP_LEVEL_OAUTH_COOKIE);
   app.set('active-shopify-shops', ACTIVE_SHOPIFY_SHOPS);
   app.set('use-online-tokens', USE_ONLINE_TOKENS);
-  console.log('APP SET', app.get('active-shopify-shops'));
+  // console.log('APP SET', app.get('active-shopify-shops'));
 
   app.use(cookieParser(Shopify.Context.API_SECRET_KEY));
 
@@ -237,7 +237,7 @@ export const createServer = async (
 
     // Detect whether we need to reinstall the app, any request from Shopify will
     // include a shop in the query parameters.
-    console.log('ACTIVE_SHOPIFY_SHOPS', app.get('active-shopify-shops'));
+    // console.log('ACTIVE_SHOPIFY_SHOPS', app.get('active-shopify-shops'));
     if (app.get('active-shopify-shops')[shop] === undefined && shop) {
       res.redirect(`/auth?${new URLSearchParams(query).toString()}`);
     } else {
@@ -250,7 +250,6 @@ export const createServer = async (
    */
   let vite: ViteDevServer;
   if (!isProd) {
-    console.log('DEV SERVER');
     vite = await import('vite').then(({ createServer }) =>
       createServer({
         root,
@@ -269,7 +268,6 @@ export const createServer = async (
     );
     app.use(vite.middlewares);
   } else {
-    console.log('PROD SERVER');
     const compression = await import('compression').then(({ default: fn }) => fn);
     const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
     const fs = await import('fs');

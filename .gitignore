@@ -61,3 +61,6 @@ app/app_proxy/*
 NOTES.md
 CHANGES.md
 /app/server/config/
+
+/proxy/*
+!/proxy/.gitkeep

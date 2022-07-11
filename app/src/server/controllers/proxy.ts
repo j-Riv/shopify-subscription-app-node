@@ -50,6 +50,7 @@ export const getCustomerSubscriptions = async (req: Request, res: Response) => {
     customerId: string;
     token: string;
   };
+
   const { token, customerId } = body;
   if (customerId) {
     try {
@@ -61,7 +62,6 @@ export const getCustomerSubscriptions = async (req: Request, res: Response) => {
           if (pgRes) {
             req.client = createClient(shop, pgRes.accessToken);
             const subscriptions = await getCustomerSubscriptionContractsById(req, customerId);
-            console.log('SUBSCRIPTIONS', subscriptions);
             if (subscriptions.length > 0) {
               res.json(subscriptions);
             } else {

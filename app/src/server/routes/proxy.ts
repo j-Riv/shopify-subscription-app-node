@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
+import { resolve } from 'path';
 import crypto from 'crypto';
 import { Request, Response, NextFunction, Express } from 'express';
-import fs from 'fs';
 import {
   // applicationProxy,
   updateCustomerSubscription,
@@ -37,36 +37,42 @@ const validateSignature = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // App Proxy routes
-const proxyRoutes = (app: Express) => {
+const proxyRoutes = async (app: Express) => {
   app.post('/app_proxy/subscription/edit', validateSignature, updateCustomerSubscription);
 
   app.post('/app_proxy/subscription/payment', validateSignature, updateSubscriptionPaymentMethod);
 
   app.post('/app_proxy/subscription/address', validateSignature, updateSubscriptionShippingAddress);
 
-  // send react app as liquid
-  app.get('/app_proxy', validateSignature, liquidApplicationProxy);
-  // router.get('/app_proxy/', validateSignature, applicationProxy);
-
-  app.get('/app_proxy/static/css/:file', (req: Request, res: Response) => {
-    res.set('Content-Type', 'text/css');
-    const readStream = fs.createReadStream(
-      `${process.env.APP_PROXY}/build/static/css/${req.params.file}`,
-    );
-    readStream.pipe(res);
-  });
-
-  app.get('/app_proxy/static/js/:file', (req: Request, res: Response) => {
-    res.set('Content-Type', 'text/javascript');
-    const readStream = fs.createReadStream(
-      `${process.env.APP_PROXY}/build/static/js/${req.params.file}`,
-    );
-    readStream.pipe(res);
-  });
-
   app.post('/app_proxy/subscriptions', validateSignature, getCustomerSubscriptions);
 
   app.post('/app_proxy/auth', validateSignature, generateCustomerAuth);
+
+  // new
+  const compression = await import('compression').then(({ default: fn }) => fn);
+  const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
+  const fs = await import('fs');
+  app.use(compression());
+  app.use(serveStatic(resolve('proxy/build')));
+  // end new
+
+  // send react app as liquid
+  app.get('/app_proxy', validateSignature, liquidApplicationProxy);
+  // app.get('/app_proxy/', validateSignature, applicationProxy);
+
+  app.get('/app_proxy/static/css/:file', (req: Request, res: Response) => {
+    res
+      .status(200)
+      .set('Content-Type', 'text/css')
+      .send(fs.readFileSync(`${process.env.APP_PROXY}/build/static/css/${req.params.file}`));
+  });
+
+  app.get('/app_proxy/static/js/:file', (req: Request, res: Response) => {
+    res
+      .status(200)
+      .set('Content-Type', 'text/javascript')
+      .send(fs.readFileSync(`${process.env.APP_PROXY}/build/static/js/${req.params.file}`));
+  });
 };
 
 export default proxyRoutes;
