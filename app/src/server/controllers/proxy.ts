@@ -9,19 +9,17 @@ import {
   commitSubscriptionDraft,
   createClient,
   getCustomerSubscriptionContractsById,
-  getSubscriptionContract,
+  // getSubscriptionContract,
   updateSubscriptionContract,
   updateSubscriptionDraft,
   updatePaymentMethod,
 } from '../handlers/index.js';
-import PgStore from '../pg-store.js';
+import { loadCurrentShop } from '../prisma-store.js';
 dotenv.config();
 
 interface Request extends Req {
   client: ApolloClient<any>;
 }
-
-const pgStorage = new PgStore();
 
 const readFileThunk = (src: string) => {
   return new Promise((resolve, reject) => {
@@ -58,7 +56,7 @@ export const getCustomerSubscriptions = async (req: Request, res: Response) => {
       if (shop && token) {
         const verified = verifyToken(shop, customerId, token);
         if (verified) {
-          const pgRes = await pgStorage.loadCurrentShop(shop);
+          const pgRes = await loadCurrentShop(shop);
           if (pgRes) {
             req.client = createClient(shop, pgRes.accessToken);
             const subscriptions = await getCustomerSubscriptionContractsById(req, customerId);
@@ -100,7 +98,7 @@ export const updateCustomerSubscription = async (req: Request, res: Response) =>
     if (shop && token) {
       const verified = verifyToken(shop, customerId, token);
       if (verified) {
-        const pgRes = await pgStorage.loadCurrentShop(shop);
+        const pgRes = await loadCurrentShop(shop);
         if (pgRes) {
           const input: { status: string; nextBillingDate?: string } = {
             status: status,
@@ -145,7 +143,7 @@ export const updateSubscriptionPaymentMethod = async (req: Request, res: Respons
     if (shop && token) {
       const verified = verifyToken(shop, customerId, token);
       if (verified) {
-        const pgRes = await pgStorage.loadCurrentShop(shop);
+        const pgRes = await loadCurrentShop(shop);
         if (pgRes) {
           const client = createClient(shop, pgRes.accessToken);
           const customerId = await updatePaymentMethod(client, paymentMethodId);
@@ -201,7 +199,7 @@ export const updateSubscriptionShippingAddress = async (req: Request, res: Respo
     if (shop && token) {
       const verified = verifyToken(shop, customerId, token);
       if (verified) {
-        const pgRes = await pgStorage.loadCurrentShop(shop);
+        const pgRes = await loadCurrentShop(shop);
         if (pgRes) {
           const client = createClient(shop, pgRes.accessToken);
           let draftId = await updateSubscriptionContract(client, subscriptionContractId);

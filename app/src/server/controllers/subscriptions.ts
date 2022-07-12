@@ -16,11 +16,9 @@ import {
   getSellingPlans,
   getSellingPlanById,
 } from '../handlers/index.js';
-import PgStore from '../pg-store.js';
+import { loadCurrentShop } from '../prisma-store.js';
 import logger from '../logger.js';
 dotenv.config();
-
-const pgStorage = new PgStore();
 
 interface Request extends Req {
   client: ApolloClient<any>;
@@ -30,7 +28,7 @@ export const getAllSubscriptionGroups = async (req: Request, res: Response) => {
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
       const plans = await getSellingPlans(req);
@@ -48,7 +46,7 @@ export const getSubscriptionGroup = async (req: Request, res: Response) => {
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
       const plan = await getSellingPlanById(req);
@@ -66,7 +64,7 @@ export const addProductToSubscriptionPlanGroup = async (req: Request, res: Respo
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       const body = req.body as {
         productId: string;
@@ -94,7 +92,7 @@ export const createSubscriptionPlanGroup = async (req: Request, res: Response) =
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
       const id = await createSellingPlanGroup(req);
@@ -112,7 +110,7 @@ export const createSubscriptionPlanGroupV2 = async (req: Request, res: Response)
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
       const response = await createSellingPlanGroupV2(req);
@@ -130,7 +128,7 @@ export const editSubscriptionPlanGroup = async (req: Request, res: Response) => 
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
       const id = await updateSellingPlanGroup(req);
@@ -148,7 +146,7 @@ export const removeProductFromSubscriptionPlanGroup = async (req: Request, res: 
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       const body = req.body as {
         productId: string;
@@ -177,7 +175,7 @@ export const deleteSubscriptionPlanGroup = async (req: Request, res: Response) =
   try {
     const shop = req.query.shop as unknown as string;
     // this will have to call db and get accessToken
-    const pgRes = await pgStorage.loadCurrentShop(shop);
+    const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
       const id = await deleteSellingPlanGroup(req);
