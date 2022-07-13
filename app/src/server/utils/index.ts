@@ -1,5 +1,6 @@
 import mailgun from 'mailgun-js';
 import dotenv from 'dotenv';
+import Logger from '../logger.js';
 import { SubscriptionContract } from '../types/subscriptions';
 dotenv.config();
 
@@ -40,7 +41,6 @@ export const sendMailGunPaymentFailure = async (
   name: string,
   nextBillingDate: string,
 ) => {
-  console.log('SENDING EMAIL VIA MAILGUN');
   const subject = `Subscription Payment Failure`;
   const message = `<p>Hello ${name}, your subscription payment has failed. We will try again on ${nextBillingDate}. To update your payment method, log into your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.</p>`;
 
@@ -56,9 +56,10 @@ export const sendMailGunPaymentFailure = async (
     subject: subject,
     html: message,
   };
+  Logger.log('info', `Sending MailGun Subscription Payment Failure`);
   mg.messages().send(data, function (error, body) {
-    if (error) console.error('ERROR', error);
-    console.log('MAILGUN RESPONSE', body);
+    if (error) Logger.log('error', `Error sending MailGun Payment Failure: ${error}`);
+    Logger.log('info', `MailGun Payment Failure Response: ${body.message}`);
     return body.message;
   });
 };
@@ -69,7 +70,6 @@ export const sendMailGunPause = async (
   sub: SubscriptionContract,
   oosProducts: string[],
 ) => {
-  console.log('SENDING EMAIL VIA MAILGUN');
   const mg = mailgun({
     apiKey: process.env.MAILGUN_API_KEY,
     domain: process.env.MAILGUN_DOMAIN,
@@ -96,9 +96,10 @@ export const sendMailGunPause = async (
       <p>To manage your subscriptions, log in to your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.</p>
     `,
   };
+  Logger.log('info', `Sending MailGun Subscription Pause`);
   mg.messages().send(data, function (error, body) {
-    if (error) console.error('ERROR', error);
-    console.log('MAILGUN RESPONSE', body);
+    if (error) Logger.log('error', `Error sending MailGun Subscription Pause: ${error}`);
+    Logger.log('info', `MailGun Subscription Pause Response: ${body.message}`);
     return body.message;
   });
 };
@@ -109,7 +110,6 @@ export const sendMailGunRenew = async (
   name: string,
   nextBillingDate: string,
 ) => {
-  console.log('SENDING EMAIL VIA MAILGUN');
   const mg = mailgun({
     apiKey: process.env.MAILGUN_API_KEY,
     domain: process.env.MAILGUN_DOMAIN,
@@ -121,9 +121,10 @@ export const sendMailGunRenew = async (
     subject: `Subscription Will Renew Soon`,
     html: `Hello ${name}, Your subscription will automatically renew on ${nextBillingDate}. To manage your subscriptions, log in to your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.`,
   };
+  Logger.log('info', `Sending MailGun Subscription Renewal Soon`);
   mg.messages().send(data, function (error, body) {
-    if (error) console.error('ERROR', error);
-    console.log('MAILGUN RESPONSE', body);
+    if (error) Logger.log('error', `Error sending MailGun Subscription Renewal Soon: ${error}`);
+    Logger.log('info', `MailGun Subscription Renewal Soon Response: ${body.message}`);
     return body.message;
   });
 };
