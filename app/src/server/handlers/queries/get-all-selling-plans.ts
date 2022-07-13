@@ -34,44 +34,44 @@ export function SELLING_PLAN_GET() {
   `;
 }
 
-export const getSellingPlans = async (req: Request) => {
+interface Data {
+  data: {
+    sellingPlanGroups: {
+      edges: SellingPlanGroupData[];
+    };
+  };
+}
+
+interface SellingPlanGroupData {
+  node: {
+    id: string;
+    appId: string;
+    description: string;
+    options: string;
+    name: string;
+    sellingPlans: {
+      edges: [
+        {
+          node: {
+            id: string;
+            name: string;
+            options: string;
+          };
+        },
+      ];
+    };
+  };
+}
+
+export const getSellingPlans = async (req: Request): Promise<SellingPlanGroupData> => {
   const { client } = req;
   const sellingPlanGroups = await client
     .query({
       query: SELLING_PLAN_GET(),
     })
-    .then(
-      (response: {
-        data: {
-          sellingPlanGroups: {
-            edges: [
-              {
-                node: {
-                  id: string;
-                  appId: string;
-                  description: string;
-                  options: string;
-                  name: string;
-                  sellingPlans: {
-                    edges: [
-                      {
-                        node: {
-                          id: string;
-                          name: string;
-                          options: string;
-                        };
-                      },
-                    ];
-                  };
-                };
-              },
-            ];
-          };
-        };
-      }) => {
-        return response.data.sellingPlanGroups.edges;
-      },
-    );
+    .then((response: Data) => {
+      return response.data.sellingPlanGroups.edges;
+    });
 
   return sellingPlanGroups;
 };

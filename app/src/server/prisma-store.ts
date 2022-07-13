@@ -402,7 +402,10 @@ export const updateSubscriptionContractAfterFailure = async (
   const id = body.admin_graphql_api_subscription_contract_id;
 
   try {
-    Logger.log('info', `Updating Next Billing Date: ${id}`);
+    Logger.log(
+      'info',
+      `Updating Next Billing Date After Payment Failure: ${id}, Send Update Payment Email: ${updatePayment}`,
+    );
     // create apollo client
     const client: ApolloClient<unknown> = createClient(shop, token);
     // check if contract exists

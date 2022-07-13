@@ -17,6 +17,7 @@ import {
   updateSubscriptionDraft,
   commitSubscriptionDraft,
   getProductVariantById,
+  getDefaultLocation,
 } from './handlers/index.js';
 import { sendMailGunPause, sendMailGunRenew } from './utils/index.js';
 import Logger from './logger.js';
@@ -61,7 +62,8 @@ export const scheduler = () => {
 };
 
 export const runBillingAttempts = async () => {
-  console.log('RUNNING BILLING ATTEMPTS');
+  Logger.log('info', `RUNNING BILLING ATTEMPTS`);
+
   // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
@@ -73,7 +75,7 @@ export const runBillingAttempts = async () => {
     // get all active contracts for shop
     const contracts = await getLocalContractsByShop(shop);
     if (contracts) {
-      console.log(`FOUND ${contracts.length} TO BILL`);
+      Logger.log('info', `FOUND ${contracts.length} TO BILL`);
       // loop through contracts
       contracts.forEach(async (contract) => {
         // create billing attempt
@@ -90,21 +92,42 @@ export const runBillingAttempts = async () => {
           ) {
             // check if quantity exists
             let oosProducts: string[] = [];
+            const defaultLocation = await getDefaultLocation(client);
+            const defaultLocationId = defaultLocation.id;
             shopifyContract.lines.edges.forEach(async (line: SubscriptionLine) => {
-              console.log('CHECKING PRODUCT', line.node.variantId);
-              const variantProduct = await getProductVariantById(client, line.node.variantId);
-              if (variantProduct.inventoryQuantity <= line.node.quantity) {
-                console.log('FOUND OUT OF STOCK ITEM', line.node.variantId);
+              Logger.log(
+                'info',
+                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+              );
+              const variantProduct = await getProductVariantById(
+                client,
+                line.node.variantId,
+                defaultLocationId,
+              );
+              const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
+              // const variantAvailable =
+              //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
+              Logger.log(
+                'info',
+                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+              );
+              if (variantAvailable <= line.node.quantity) {
+                Logger.log('info', `FOUND OUT OF STOCK ITEM ${line.node.variantId}`);
                 oosProducts.push(variantProduct.product.title);
               }
             });
             // create billing attempt
             if (oosProducts.length === 0) {
               const billingAttempt = await createSubscriptionBillingAttempt(client, contract.id);
-              Logger.log('info', `Created Billing Attempt: ${billingAttempt}`);
+              Logger.log(
+                'info',
+                `Created Billing Attempt For ${contract.id}: ${billingAttempt.id}`,
+              );
             } else {
               // pause subscription and send email
               // update subscription
+              Logger.log('info', `Pausing Subscription Contract:  ${contract.id} due to OOS`);
+
               let draftId = await updateSubscriptionContract(client, contract.id);
               draftId = await updateSubscriptionDraft(client, draftId, {
                 status: 'PAUSED',
@@ -113,6 +136,7 @@ export const runBillingAttempts = async () => {
               // send email
               if (subscriptionId === contract.id) {
                 const email = shopifyContract.customer.email;
+                Logger.log('info', `Sending OOS Email to: ${email} for Contract: ${contract.id}`);
                 sendMailGunPause(shop, email, shopifyContract, oosProducts);
               }
             }
@@ -157,7 +181,7 @@ export const runBillingAttempts = async () => {
 // };
 
 export const runRenewalNotification = async () => {
-  console.log('RUNNING RENEWING SOON');
+  Logger.log('info', `RUNNING RENEWEING SOON`);
   // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
@@ -172,7 +196,7 @@ export const runRenewalNotification = async () => {
     const nextBillingDate = new Date(now).toISOString().substring(0, 10);
     const contracts = await getLocalContractsRenewingSoonByShop(shop, nextBillingDate);
     if (contracts) {
-      console.log(`FOUND ${contracts.length} RENEWING SOON`);
+      Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWEING SOON`);
       // loop through contracts
       contracts.forEach(async (contract) => {
         // create billing attempt
@@ -200,7 +224,7 @@ export const runRenewalNotification = async () => {
 };
 
 export const runSubscriptionContractSync = async () => {
-  console.log('RUNNING SUBSCRIPTION CONTRACT SYNC');
+  Logger.log('info', `RUNNING SUBSCRIPTION CONTRACT SYNC`);
   // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
@@ -218,8 +242,7 @@ export const runSubscriptionContractSync = async () => {
 };
 
 export const runCancellation = async () => {
-  console.log('RUNNING CLEANUP');
-  // get active shopify stores
+  Logger.log('info', `RUNNING CLEANUP`); // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
   // loop through active shops
