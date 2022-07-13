@@ -1,6 +1,6 @@
 # Shopify Subscription App Node
 
-> Embedded Shopify App made with Node and TypeScript.
+> Embedded Shopify Subscription app made with Node, Prisma, React, Polaris, App Bridge React and TypeScript.
 
 🚧🔨👷 Currently Under Development
 
