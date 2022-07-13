@@ -18,7 +18,22 @@ export function SUBSCRIPTION_DRAFT_UPDATE() {
   `;
 }
 
-export const updateSubscriptionDraft = async (client: any, draftId: string, input: any) => {
+interface Data {
+  data: {
+    subscriptionDraftUpdate: {
+      draft: {
+        id: string;
+      };
+      userErrors: any[];
+    };
+  };
+}
+
+export const updateSubscriptionDraft = async (
+  client: any,
+  draftId: string,
+  input: any,
+): Promise<string> => {
   console.log('INPUT', input);
 
   const subscriptionDraftUpdate = await client
@@ -29,7 +44,7 @@ export const updateSubscriptionDraft = async (client: any, draftId: string, inpu
         input: input,
       },
     })
-    .then((response: { data?: any }) => {
+    .then((response: Data) => {
       const data = response.data.subscriptionDraftUpdate;
       if (data.userErrors.length > 0) {
         return data.userErrors;

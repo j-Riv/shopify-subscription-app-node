@@ -31,33 +31,6 @@ export function CUSTOMER_SUBSCRIPTIONS_CONTRACTS_BY_ID_GET() {
                   deliveryPrice {
                     amount
                   }
-                  # orders(first: 1, reverse: true) {
-                  #   edges {
-                  #     node {
-                  #       id
-                  #       subtotalPriceSet {
-                  #         shopMoney {
-                  #           amount
-                  #         }
-                  #       }
-                  #       totalShippingPriceSet {
-                  #         shopMoney {
-                  #           amount
-                  #         }
-                  #       }
-                  #       totalTaxSet {
-                  #         shopMoney {
-                  #           amount
-                  #         }
-                  #       }
-                  #       totalPriceSet {
-                  #         shopMoney {
-                  #           amount
-                  #         }
-                  #       }
-                  #     }
-                  #   }
-                  # }
                   customerPaymentMethod {
                     id
                     instrument {
@@ -138,7 +111,99 @@ export function CUSTOMER_SUBSCRIPTIONS_CONTRACTS_BY_ID_GET() {
   `;
 }
 
-export const getCustomerSubscriptionContractsById = async (req: Request, customerId: string) => {
+interface Data {
+  data: {
+    customers: {
+      pageInfo: {
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+      };
+      edges: CustomerData[];
+    };
+  };
+}
+
+interface CustomerData {
+  node: {
+    id: string;
+    verifiedEmail: boolean;
+    firstName: string;
+    lastName: string;
+    subscriptionContracts: {
+      edges: SubscriptionContractData[];
+    };
+  };
+}
+
+interface SubscriptionContractData {
+  cursor: string;
+  node: {
+    id: string;
+    createdAt: string;
+    status: string;
+    nextBillingDate: string;
+    deliveryPrice: {
+      amount: string;
+    };
+    customerPaymentMethod: {
+      id: string;
+      instrument: any;
+    };
+    billingPolicy: {
+      interval: string;
+      intervalCount: number;
+    };
+    deliveryMethod: {
+      address: {
+        address1: string;
+        address2: string;
+        city: string;
+        country: string;
+        countryCode: string;
+        province: string;
+        provinceCode: string;
+        zip: string;
+        name: string;
+        company: string;
+        firstName: string;
+        lastName: string;
+        phone: string;
+      };
+    };
+    lines: {
+      edges: LineData[];
+    };
+  };
+}
+
+interface LineData {
+  node: {
+    id: string;
+    sku: string;
+    productId: string;
+    variantId: string;
+    quantity: number;
+    title: string;
+    variantTitle: string;
+    variantImage: {
+      altText: string;
+      originalSrc: string;
+    };
+    currentPrice: {
+      amount: string;
+    };
+    pricingPolicy: {
+      basePrice: {
+        amount: string;
+      };
+    };
+  };
+}
+
+export const getCustomerSubscriptionContractsById = async (
+  req: Request,
+  customerId: string,
+): Promise<[] | SubscriptionContractData[]> => {
   const { client } = req;
   const subscriptionContracts = await client
     .query({
@@ -148,7 +213,7 @@ export const getCustomerSubscriptionContractsById = async (req: Request, custome
         query: `id:${customerId}`,
       },
     })
-    .then((response: { data: any }) => {
+    .then((response: Data) => {
       return response.data.customers.edges.length > 0
         ? response.data.customers.edges[0].node.subscriptionContracts.edges
         : response.data.customers.edges;

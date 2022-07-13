@@ -28,7 +28,28 @@ export function PRODUCTS_BY_ID_GET() {
   `;
 }
 
-export const getProductsById = async (req: Request, ids: string[]) => {
+interface Data {
+  data: {
+    nodes: NodeData[];
+  };
+}
+
+interface NodeData {
+  id: string;
+  title: string;
+  variants: {
+    edges: VariantData[];
+  };
+}
+
+interface VariantData {
+  node: {
+    id: string;
+    title: string;
+  };
+}
+
+export const getProductsById = async (req: Request, ids: string[]): Promise<NodeData[]> => {
   const { client } = req;
   const products = await client
     .query({
@@ -37,7 +58,7 @@ export const getProductsById = async (req: Request, ids: string[]) => {
         ids: ids,
       },
     })
-    .then((response: { data: any }) => {
+    .then((response: Data) => {
       return response.data.nodes;
     });
   return products;

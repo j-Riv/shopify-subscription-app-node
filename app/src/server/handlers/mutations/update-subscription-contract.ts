@@ -18,7 +18,17 @@ export function SUBSCRIPTION_CONTRACT_UPDATE() {
   `;
 }
 
-export const updateSubscriptionContract = async (client: any, id: string) => {
+interface Data {
+  data: {
+    subscriptionContractUpdate: {
+      draft: {
+        id: string;
+      };
+    };
+  };
+}
+
+export const updateSubscriptionContract = async (client: any, id: string): Promise<string> => {
   console.log('UPDATING SUBSCRIPTION CONTRACT ID', id);
   const subscriptionContractUpdate = await client
     .mutate({
@@ -27,7 +37,7 @@ export const updateSubscriptionContract = async (client: any, id: string) => {
         contractId: id,
       },
     })
-    .then((response: { data?: any }) => {
+    .then((response: Data) => {
       return response.data.subscriptionContractUpdate.draft.id;
     });
 

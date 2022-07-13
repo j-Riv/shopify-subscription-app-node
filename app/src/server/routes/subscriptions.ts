@@ -5,7 +5,6 @@ import {
   getAllSubscriptionGroups,
   addProductToSubscriptionPlanGroup,
   createSubscriptionPlanGroup,
-  createSubscriptionPlanGroupV2,
   editSubscriptionPlanGroup,
   removeProductFromSubscriptionPlanGroup,
   deleteSubscriptionPlanGroup,
@@ -40,8 +39,8 @@ const subscriptionRoutes = (app: Express) => {
   app.post('/subscription-plan/product/add', verifyJwt, addProductToSubscriptionPlanGroup);
 
   app.post('/subscription-plan/create', verifyJwt, createSubscriptionPlanGroup);
-
-  app.post('/subscription-plan/v2/create', verifyJwt, createSubscriptionPlanGroupV2);
+  // update subscripiton extension, then remove
+  app.post('/subscription-plan/v2/create', verifyJwt, createSubscriptionPlanGroup);
 
   app.post('/subscription-plan/edit', verifyJwt, editSubscriptionPlanGroup);
 

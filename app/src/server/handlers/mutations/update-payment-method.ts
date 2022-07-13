@@ -17,7 +17,18 @@ export function PAYMENT_METHOD_UPDATE() {
   `;
 }
 
-export const updatePaymentMethod = async (client: any, id: string) => {
+interface Data {
+  data: {
+    customerPaymentMethodSendUpdateEmail: {
+      customer: {
+        id: string;
+      };
+      userErrors: any[];
+    };
+  };
+}
+
+export const updatePaymentMethod = async (client: any, id: string): Promise<string> => {
   console.log('UPDATING PAYMENT METHOD', id);
   const subscriptionContractUpdate = await client
     .mutate({
@@ -26,7 +37,7 @@ export const updatePaymentMethod = async (client: any, id: string) => {
         customerPaymentMethodId: id,
       },
     })
-    .then((response: { data?: any }) => {
+    .then((response: Data) => {
       return response.data.customerPaymentMethodSendUpdateEmail.customer.id;
     });
 

@@ -7,52 +7,6 @@ interface Request extends Req {
   client: any;
 }
 
-interface SellingPlanGroup {
-  id: string;
-  appId: string;
-  description: string;
-  options: string[];
-  name: string;
-  merchantCode: string;
-  summary: string;
-  sellingPlans: {
-    edges: [SellingPlan];
-  };
-}
-
-interface SellingPlan {
-  node: {
-    id: string;
-    name: string;
-    description: string;
-    options: string[];
-    position: number;
-    billingPolicy: {
-      interval: string;
-      intervalCount: number;
-    };
-    deliveryPolicty: {
-      interval: string;
-      intervalCount: number;
-    };
-    pricingPolicies: [
-      {
-        adjustmentType: string;
-        adjustmentValue: {
-          percentage: number;
-        };
-      },
-    ];
-  };
-}
-
-interface FilteredPlan {
-  id: string;
-  name: string;
-  options: string[];
-  position: string | number;
-}
-
 export function SELLING_PLAN_GET() {
   return gql`
     query sellingPlanGroup($id: ID!) {
@@ -102,7 +56,59 @@ export function SELLING_PLAN_GET() {
   `;
 }
 
-const buildResponse = (data: SellingPlanGroup) => {
+interface SellingPlanGroupData {
+  id: string;
+  appId: string;
+  description: string;
+  options: string[];
+  name: string;
+  merchantCode: string;
+  summary: string;
+  sellingPlans: {
+    edges: SellingPlanData[];
+  };
+}
+
+interface SellingPlanData {
+  node: {
+    id: string;
+    name: string;
+    description: string;
+    options: string[];
+    position: number;
+    billingPolicy: {
+      interval: string;
+      intervalCount: number;
+    };
+    deliveryPolicty: {
+      interval: string;
+      intervalCount: number;
+    };
+    pricingPolicies: [
+      {
+        adjustmentType: string;
+        adjustmentValue: {
+          percentage: number;
+        };
+      },
+    ];
+  };
+}
+
+interface FilteredPlan {
+  id: string;
+  name: string;
+  options: string[];
+  position: string | number;
+}
+
+interface Data {
+  data: {
+    sellingPlanGroup: SellingPlanData;
+  };
+}
+
+const buildResponse = (data: SellingPlanGroupData) => {
   const sellingPlans = data.sellingPlans.edges;
   const plans: FilteredPlan[] = [];
   sellingPlans.forEach((plan) => {
@@ -127,7 +133,7 @@ const buildResponse = (data: SellingPlanGroup) => {
   return response;
 };
 
-export const getSellingPlanById = async (req: Request) => {
+export const getSellingPlanById = async (req: Request): Promise<SellingPlanGroupData> => {
   const { client } = req;
   const body = req.body as {
     sellingPlanGroupId: string;
@@ -140,9 +146,7 @@ export const getSellingPlanById = async (req: Request) => {
         id: sellingPlanGroupId,
       },
     })
-    .then((response: { data: any }) => {
-      // const filtered = buildResponse(response.data.sellingPlanGroup);
-      // return filtered;
+    .then((response: Data) => {
       return response.data.sellingPlanGroup;
     });
 

@@ -26,10 +26,23 @@ export function CREATE_SUBSCRIPTION_BILLING_ATTEMPT() {
   `;
 }
 
+interface Data {
+  data: {
+    subscriptionBillingAttemptCreate: {
+      subscriptionBillingAttempt: SubscriptionBillingAttemptData;
+      userErrors: any[];
+    };
+  };
+}
+
+interface SubscriptionBillingAttemptData {
+  id: string;
+}
+
 export const createSubscriptionBillingAttempt = async (
   client: any,
   subscriptionContractId: string,
-) => {
+): Promise<SubscriptionBillingAttemptData> => {
   const variables = {
     subscriptionContractId: subscriptionContractId,
     subscriptionBillingAttemptInput: {
@@ -41,7 +54,7 @@ export const createSubscriptionBillingAttempt = async (
       mutation: CREATE_SUBSCRIPTION_BILLING_ATTEMPT(),
       variables: variables,
     })
-    .then((response: { data?: any }) => {
+    .then((response: Data) => {
       return response.data.subscriptionBillingAttemptCreate.subscriptionBillingAttempt;
     });
 

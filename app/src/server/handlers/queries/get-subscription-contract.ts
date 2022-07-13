@@ -1,7 +1,6 @@
 import 'isomorphic-fetch';
 import pkg from '@apollo/client';
 const { gql } = pkg;
-import { SubscriptionContract } from '../../types/subscriptions';
 
 export function SUBSCRIPTION_CONTRACT_GET() {
   return gql`
@@ -89,7 +88,92 @@ export function SUBSCRIPTION_CONTRACT_GET() {
   `;
 }
 
-export const getSubscriptionContract = async (client: any, id: string) => {
+interface Data {
+  data: {
+    subscriptionContract: SubscriptionContractData;
+  };
+}
+
+export interface SubscriptionContractData {
+  id: string;
+  status: string;
+  nextBillingDate: string;
+  customer: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  deliveryPrice: {
+    currencyCode: string;
+    amount: string;
+  };
+  lines: {
+    edges: SubscriptionLineData[];
+  };
+  originOrder: {
+    legacyResourceId: string;
+  };
+  lastPaymentStatus: string;
+  customerPaymentMethod: {
+    id: string;
+  };
+  deliveryPolicy: {
+    interval: string;
+    intervalCount: number;
+  };
+  billingPolicy: {
+    interval: string;
+    intervalCount: number;
+  };
+  deliveryMethod: {
+    address: {
+      address1: string;
+      address2: string;
+      city: string;
+      country: string;
+      province: string;
+      zip: string;
+      name: string;
+      company: string;
+      firstName: string;
+      lastName: string;
+    };
+  };
+}
+
+export interface SubscriptionLineData {
+  node: {
+    id: string;
+    productId: string;
+    variantId: string;
+    title: string;
+    variantTitle: string;
+    quantity: number;
+    requiresShipping: boolean;
+    variantImage: {
+      originalSrc: string;
+      altText: string;
+    };
+    pricingPolicy: {
+      cycleDiscounts: {
+        adjustmentType: string;
+        computedPrice: {
+          amount: string;
+        };
+      };
+      basePrice: {
+        amount: string;
+        currency: string;
+      };
+    };
+  };
+}
+
+export const getSubscriptionContract = async (
+  client: any,
+  id: string,
+): Promise<SubscriptionContractData> => {
   const subscriptionContract = await client
     .query({
       query: SUBSCRIPTION_CONTRACT_GET(),
@@ -97,15 +181,9 @@ export const getSubscriptionContract = async (client: any, id: string) => {
         id: id,
       },
     })
-    .then(
-      (response: {
-        data: {
-          subscriptionContract: SubscriptionContract;
-        };
-      }) => {
-        return response.data.subscriptionContract;
-      },
-    );
+    .then((response: Data) => {
+      return response.data.subscriptionContract;
+    });
 
   return subscriptionContract;
 };

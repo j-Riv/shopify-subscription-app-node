@@ -2,19 +2,20 @@ import 'isomorphic-fetch';
 import pkg from '@apollo/client';
 const { gql } = pkg;
 import { Request as Req } from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
 
 interface Request extends Req {
   client: any;
 }
 
 interface Body {
-  planTitle: string;
-  percentageOff: string;
+  planGroupName: string;
   merchantCode: string;
-  intervalOption: string;
   numberOfPlans: string;
-  intervalCount: string;
   planGroupOption: string;
+  planGroupDescription: string;
+  sellingPlans: any;
 }
 
 export function SELLING_PLAN_CREATE() {
@@ -42,117 +43,98 @@ const cleanInterval = (interval: string) => {
 
 const createInput = (body: Body) => {
   const {
-    planTitle,
-    percentageOff,
+    planGroupName,
     merchantCode,
-    intervalOption,
     numberOfPlans,
-    intervalCount,
     planGroupOption,
+    planGroupDescription,
+    sellingPlans,
   } = body;
-  // Set interval for naming
-  const intervalTitle = cleanInterval(intervalOption);
+
   // Set number of plans
-  let sellingPlans: any[] = [];
-  const intervalCountNumber = parseInt(intervalCount);
-  const percentageOffNumber = parseFloat(percentageOff);
-  const plans = parseInt(numberOfPlans);
-  // savings
-  let savingsDescription = '';
-  let savingsName = '';
-  if (percentageOffNumber > 0) {
-    savingsDescription = `, save ${percentageOff}% on every order`;
-    savingsName = ` (Save ${percentageOff}%)`;
-  }
-  if (plans > 1) {
-    for (let i = 1; i <= plans; i++) {
-      let deliveryOption = `Delivered every ${i * intervalCountNumber} ${intervalTitle}s`;
-      const planName = `${deliveryOption}${savingsName}`;
-      if (i === 1) {
-        deliveryOption = `Delivered every ${intervalTitle}`;
+  let plans: any[] = [];
+  const planCount = parseInt(numberOfPlans);
+  if (planCount > 1) {
+    for (let i = 1; i <= planCount; i++) {
+      const currentPlan = sellingPlans[i.toString()];
+      // Set interval for naming
+      const intervalTitle = cleanInterval(currentPlan.intervalOption);
+      // savings
+      let savingsDescription: string = '';
+      let savingsName: string = '';
+      if (parseInt(currentPlan.percentageOff) > 0) {
+        savingsDescription = `, save ${currentPlan.percentageOff}% on every order`;
+        savingsName = ` (Save ${currentPlan.percentageOff}%)`;
       }
+      let planOption: string = `Delivered every `;
+      if (parseInt(currentPlan.intervalCount) > 1) {
+        planOption = `${planOption}${currentPlan.intervalCount} `;
+      }
+      planOption = `${planOption}${intervalTitle}`;
+      if (parseInt(currentPlan.intervalCount) > 1) {
+        planOption = `${planOption}s`;
+      }
+      // plan option
+      if (parseInt(currentPlan.percentageOff) > 0) {
+        planOption = `${planOption}${savingsName}`;
+      }
+
       let sellingPlan = {
-        name: planName,
-        description: `${deliveryOption}${savingsDescription}. Auto renews, skip, cancel anytime.`,
-        options: deliveryOption,
-        position: i,
+        name: planOption,
+        description: `${planOption}${savingsDescription}. Auto renews, skip, cancel anytime.`,
+        options: planOption,
+        position: currentPlan.id,
         billingPolicy: {
           recurring: {
-            interval: intervalOption,
-            intervalCount: i * intervalCountNumber,
+            interval: currentPlan.intervalOption,
+            intervalCount: parseInt(currentPlan.intervalCount),
           },
         },
         deliveryPolicy: {
           recurring: {
-            interval: intervalOption,
-            intervalCount: i * intervalCountNumber,
+            interval: currentPlan.intervalOption,
+            intervalCount: parseInt(currentPlan.intervalCount),
           },
         },
         pricingPolicies: [
           {
             fixed: {
               adjustmentType: 'PERCENTAGE',
-              adjustmentValue: { percentage: percentageOffNumber },
+              adjustmentValue: {
+                percentage: parseInt(currentPlan.percentageOff),
+              },
             },
           },
         ],
       };
-      sellingPlans.push(sellingPlan);
+      console.log('SELLING PLAN', sellingPlan);
+      plans.push(sellingPlan);
     }
-  } else {
-    let deliveryOption = `Delivered every ${intervalCount} ${intervalTitle}s`;
-    if (intervalCountNumber === 1) {
-      deliveryOption = `Delivered every ${intervalTitle}`;
-    }
-    sellingPlans = [
-      {
-        name: `${deliveryOption}${savingsName}`,
-        description: `${deliveryOption}${savingsDescription}. Auto renews, skip, cancel anytime.`,
-        options: deliveryOption,
-        position: 0,
-        billingPolicy: {
-          recurring: {
-            interval: intervalOption,
-            intervalCount: intervalCountNumber,
-          },
-        },
-        deliveryPolicy: {
-          recurring: {
-            interval: intervalOption,
-            intervalCount: intervalCountNumber,
-          },
-        },
-        pricingPolicies: [
-          {
-            fixed: {
-              adjustmentType: 'PERCENTAGE',
-              adjustmentValue: { percentage: percentageOffNumber },
-            },
-          },
-        ],
-      },
-    ];
   }
-  // fix for day
-  let fixedIntervalTitle: string;
-  if (intervalTitle === 'Day') {
-    fixedIntervalTitle = 'Daily';
-  } else {
-    fixedIntervalTitle = `${intervalTitle}ly`;
-  }
+
   const variables = {
     input: {
-      appId: '4975729',
-      name: planTitle,
+      name: planGroupName,
       merchantCode: merchantCode, // 'subscribe-and-save'
-      description: `Delivered at ${fixedIntervalTitle} intervals at ${percentageOff}% discount.`,
+      description: planGroupDescription,
       options: [planGroupOption], // 'Delivery every'
       position: 1,
-      sellingPlansToCreate: sellingPlans,
+      sellingPlansToCreate: plans,
     },
   };
   return variables;
 };
+
+interface Data {
+  data: {
+    sellingPlanGroupCreate: {
+      sellingPlanGroup: {
+        id: string;
+      };
+      userErrors?: any[];
+    };
+  };
+}
 
 export const createSellingPlanGroup = async (req: Request) => {
   const { client } = req;
@@ -164,19 +146,14 @@ export const createSellingPlanGroup = async (req: Request) => {
       mutation: SELLING_PLAN_CREATE(),
       variables: variables,
     })
-    .then(
-      (response: {
-        data: {
-          sellingPlanGroupCreate: {
-            sellingPlanGroup: {
-              id: string;
-            };
-          };
-        };
-      }) => {
-        return response.data.sellingPlanGroupCreate.sellingPlanGroup.id;
-      },
-    );
+    .then((response: Data) => {
+      const error = response.data.sellingPlanGroupCreate.userErrors[0];
+      if (error) {
+        console.log('ERROR', error);
+        return error;
+      }
+      return response.data.sellingPlanGroupCreate.sellingPlanGroup.id;
+    });
 
   return sellingPlanGroupId;
 };

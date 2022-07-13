@@ -21,7 +21,15 @@ export function SELLING_PLAN_REMOVE_PRODUCT() {
   `;
 }
 
-export const removeProductsFromSellingPlanGroup = async (req: Request) => {
+interface Data {
+  data: {
+    sellingPlanGroupRemoveProducts: {
+      removedProductIds: string[];
+    };
+  };
+}
+
+export const removeProductsFromSellingPlanGroup = async (req: Request): Promise<String[]> => {
   const { client } = req;
   const body = req.body as {
     sellingPlanGroupId: string;
@@ -37,17 +45,9 @@ export const removeProductsFromSellingPlanGroup = async (req: Request) => {
       mutation: SELLING_PLAN_REMOVE_PRODUCT(),
       variables: variables,
     })
-    .then(
-      (response: {
-        data: {
-          sellingPlanGroupRemoveProducts: {
-            removedProductIds: string[];
-          };
-        };
-      }) => {
-        return response.data.sellingPlanGroupRemoveProducts.removedProductIds;
-      },
-    );
+    .then((response: Data) => {
+      return response.data.sellingPlanGroupRemoveProducts.removedProductIds;
+    });
 
   return products;
 };

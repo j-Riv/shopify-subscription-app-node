@@ -29,23 +29,23 @@ export function ONETIME_CREATE(url: string) {
   `;
 }
 
+interface Data {
+  data: {
+    appPurchaseOneTimeCreate: {
+      confirmationUrl: string;
+      appPurchaseOneTime: {
+        id: string;
+      };
+    };
+  };
+}
+
 export const getOneTimeUrl = async (req: Request, res: Response) => {
   const { client } = req;
   const confirmationUrl = await client
     .mutate({
       mutation: ONETIME_CREATE(process.env.HOST!),
     })
-    .then(
-      (response: {
-        data: {
-          appPurchaseOneTimeCreate: {
-            confirmationUrl: string;
-            appPurchaseOneTime: {
-              id: string;
-            };
-          };
-        };
-      }) => response.data.appPurchaseOneTimeCreate.confirmationUrl,
-    );
+    .then((response: Data) => response.data.appPurchaseOneTimeCreate.confirmationUrl);
   return res.redirect(confirmationUrl);
 };

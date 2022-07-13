@@ -10,7 +10,6 @@ import {
   removeProductVariantFromSellingPlanGroups,
   createClient,
   createSellingPlanGroup,
-  createSellingPlanGroupV2,
   updateSellingPlanGroup,
   deleteSellingPlanGroup,
   getSellingPlans,
@@ -95,25 +94,7 @@ export const createSubscriptionPlanGroup = async (req: Request, res: Response) =
     const pgRes = await loadCurrentShop(shop);
     if (pgRes) {
       req.client = createClient(shop, pgRes.accessToken);
-      const id = await createSellingPlanGroup(req);
-      res.json({ id });
-    } else {
-      return res.status(401);
-    }
-  } catch (err: any) {
-    logger.log('error', err.message);
-    return res.status(500);
-  }
-};
-
-export const createSubscriptionPlanGroupV2 = async (req: Request, res: Response) => {
-  try {
-    const shop = req.query.shop as unknown as string;
-    // this will have to call db and get accessToken
-    const pgRes = await loadCurrentShop(shop);
-    if (pgRes) {
-      req.client = createClient(shop, pgRes.accessToken);
-      const response = await createSellingPlanGroupV2(req);
+      const response = await createSellingPlanGroup(req);
       res.json(response);
     } else {
       return res.status(401);

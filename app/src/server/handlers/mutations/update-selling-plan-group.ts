@@ -136,6 +136,7 @@ const createInput = (body: Body) => {
     };
     plans.push(sellingPlan);
   });
+
   const variables = {
     id: sellingPlanGroupId,
     input: {
@@ -148,10 +149,23 @@ const createInput = (body: Body) => {
       sellingPlansToUpdate: plans,
     },
   };
+
   return variables;
 };
 
-export const updateSellingPlanGroup = async (req: Request) => {
+interface Data {
+  data: {
+    sellingPlanGroupUpdate: {
+      deletedSellingPlanIds: string;
+      sellingPlanGroup: {
+        id: string;
+      };
+      userErrors?: any;
+    };
+  };
+}
+
+export const updateSellingPlanGroup = async (req: Request): Promise<string> => {
   const { client } = req;
   const body = req.body as any;
   const variables = createInput(body);
@@ -160,26 +174,14 @@ export const updateSellingPlanGroup = async (req: Request) => {
       mutation: SELLING_PLAN_GROUP_UPDATE(),
       variables: variables,
     })
-    .then(
-      (response: {
-        data: {
-          sellingPlanGroupUpdate: {
-            deletedSellingPlanIds: string;
-            sellingPlanGroup: {
-              id: string;
-            };
-            userErrors?: any;
-          };
-        };
-      }) => {
-        const error = response.data.sellingPlanGroupUpdate.userErrors[0];
-        if (error) {
-          console.log('ERROR', error);
-          return error;
-        }
-        return response.data.sellingPlanGroupUpdate.sellingPlanGroup.id;
-      },
-    );
+    .then((response: Data) => {
+      const error = response.data.sellingPlanGroupUpdate.userErrors[0];
+      if (error) {
+        console.log('ERROR', error);
+        return error;
+      }
+      return response.data.sellingPlanGroupUpdate.sellingPlanGroup.id;
+    });
 
   return updatedSellingPlanGroupId;
 };

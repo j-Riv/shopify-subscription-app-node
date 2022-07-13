@@ -32,9 +32,6 @@ export function SUBSCRIPTION_CONTRACTS_GET() {
               legacyResourceId
             }
             lastPaymentStatus
-            customerPaymentMethod {
-              id
-            }
             deliveryPolicy {
               interval
               intervalCount
@@ -50,27 +47,66 @@ export function SUBSCRIPTION_CONTRACTS_GET() {
   `;
 }
 
-export const getSubscriptionContracts = async (client: any, variables: any) => {
+interface Data {
+  data: {
+    subscriptionContracts: SubscriptionContractsData;
+  };
+}
+
+interface SubscriptionContractsData {
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  edges: SubscriptionContractData[];
+}
+
+interface SubscriptionContractData {
+  cursor: string;
+  node: {
+    id: string;
+    status: string;
+    nextBillingDate: string;
+    customer: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+    customerPaymentMethod: {
+      id: string;
+    };
+    deliveryPrice: {
+      currencyCode: string;
+      amount: string;
+    };
+    originOrder: {
+      legacyResourceId: string;
+    };
+    lastPaymentStatus: string;
+    deliveryPolicy: {
+      interval: string;
+      intervalCount: number;
+    };
+    billingPolicy: {
+      interval: string;
+      intervalCount: number;
+    };
+  };
+}
+
+export const getSubscriptionContracts = async (
+  client: any,
+  variables: any,
+): Promise<SubscriptionContractsData> => {
   const subscriptionContracts = await client
     .query({
       query: SUBSCRIPTION_CONTRACTS_GET(),
       variables: variables,
     })
-    .then(
-      (response: {
-        data: {
-          subscriptionContracts: {
-            pageInfo: {
-              hasNextPage: boolean;
-              hasPreviousPage: boolean;
-            };
-            edges: any[];
-          };
-        };
-      }) => {
-        return response.data.subscriptionContracts;
-      },
-    );
+    .then((response: Data) => {
+      return response.data.subscriptionContracts;
+    });
 
   return subscriptionContracts;
 };
