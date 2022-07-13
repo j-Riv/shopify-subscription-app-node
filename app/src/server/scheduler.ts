@@ -132,9 +132,9 @@ export const runBillingAttempts = async () => {
               draftId = await updateSubscriptionDraft(client, draftId, {
                 status: 'PAUSED',
               });
-              const subscriptionId = await commitSubscriptionDraft(client, draftId);
+              const subscription = await commitSubscriptionDraft(client, draftId);
               // send email
-              if (subscriptionId === contract.id) {
+              if (subscription.id === contract.id) {
                 const email = shopifyContract.customer.email;
                 Logger.log('info', `Sending OOS Email to: ${email} for Contract: ${contract.id}`);
                 sendMailGunPause(shop, email, shopifyContract, oosProducts);

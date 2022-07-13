@@ -24,7 +24,18 @@ export function SELLING_PLAN_REMOVE_PRODUCT_VARIANT() {
   `;
 }
 
-export const removeProductVariantFromSellingPlanGroups = async (req: Request) => {
+interface Data {
+  data: {
+    productVariantLeaveSellingPlanGroups: {
+      productVariant: {
+        id: string;
+      };
+      userErrors: any[];
+    };
+  };
+}
+
+export const removeProductVariantFromSellingPlanGroups = async (req: Request): Promise<Data> => {
   const { client } = req;
   const body = req.body as {
     variantId: string;
@@ -41,9 +52,7 @@ export const removeProductVariantFromSellingPlanGroups = async (req: Request) =>
       mutation: SELLING_PLAN_REMOVE_PRODUCT_VARIANT(),
       variables: variables,
     })
-    .then((response: { data: any }) => {
-      // response.data.productVariantLeaveSellingPlanGroups.productVariant.id;
-      console.log('response', response.data);
+    .then((response: Data) => {
       return response.data;
     });
 

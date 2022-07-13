@@ -25,7 +25,29 @@ export function SUBSCRIPTION_DRAFT_COMMIT() {
   `;
 }
 
-export const commitSubscriptionDraft = async (client: any, id: string) => {
+interface Data {
+  data: {
+    subscriptionDraftCommit: {
+      contract: SubscriptionContractData;
+      userErrors: any[];
+    };
+  };
+}
+
+interface SubscriptionContractData {
+  id: string;
+  status: string;
+  customer: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export const commitSubscriptionDraft = async (
+  client: any,
+  id: string,
+): Promise<SubscriptionContractData> => {
   const subscriptionDraftCommit = await client
     .mutate({
       mutation: SUBSCRIPTION_DRAFT_COMMIT(),
@@ -33,7 +55,7 @@ export const commitSubscriptionDraft = async (client: any, id: string) => {
         draftId: id,
       },
     })
-    .then((response: { data?: any }) => {
+    .then((response: Data) => {
       const data = response.data.subscriptionDraftCommit;
       if (data.userErrors.length > 0) {
         return data.userErrors;

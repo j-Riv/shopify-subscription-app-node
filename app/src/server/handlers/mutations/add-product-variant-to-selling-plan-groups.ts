@@ -24,7 +24,18 @@ export function SELLING_PLAN_ADD_PRODUCT_VARIANT() {
   `;
 }
 
-export const addProductVariantToSellingPlanGroups = async (req: Request) => {
+interface Data {
+  data: {
+    productVariantJoinSellingPlanGroups: {
+      productVariant: {
+        id: string;
+      };
+      userErrors: any[];
+    };
+  };
+}
+
+export const addProductVariantToSellingPlanGroups = async (req: Request): Promise<Data> => {
   const { client } = req;
   const body = req.body as {
     variantId: string;
@@ -40,8 +51,7 @@ export const addProductVariantToSellingPlanGroups = async (req: Request) => {
       mutation: SELLING_PLAN_ADD_PRODUCT_VARIANT(),
       variables: variables,
     })
-    .then((response: { data: any }) => {
-      // response.data.productVariantJoinSellingPlanGroups.productVariant.id
+    .then((response: Data) => {
       return response.data;
     });
 

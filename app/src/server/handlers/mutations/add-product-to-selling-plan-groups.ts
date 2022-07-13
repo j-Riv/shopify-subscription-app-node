@@ -24,7 +24,18 @@ export function SELLING_PLAN_ADD_PRODUCT() {
   `;
 }
 
-export const addProductToSellingPlanGroups = async (req: Request) => {
+interface Data {
+  data: {
+    productJoinSellingPlanGroups: {
+      product: {
+        id: string;
+      };
+      userErrors: any[];
+    };
+  };
+}
+
+export const addProductToSellingPlanGroups = async (req: Request): Promise<Data> => {
   const { client } = req;
   const body = req.body as {
     productId: string;
@@ -40,19 +51,9 @@ export const addProductToSellingPlanGroups = async (req: Request) => {
       mutation: SELLING_PLAN_ADD_PRODUCT(),
       variables: variables,
     })
-    .then(
-      (response: {
-        data: {
-          productJoinSellingPlanGroups: {
-            product: {
-              id: string;
-            };
-          };
-        };
-      }) => {
-        return response.data;
-      },
-    );
+    .then((response: Data) => {
+      return response.data;
+    });
 
   return product;
 };

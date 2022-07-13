@@ -44,24 +44,24 @@ export function RECURRING_CREATE(url: string) {
     }`;
 }
 
+interface Data {
+  data: {
+    appSubscriptionCreate: {
+      confirmationUrl: string;
+      appSubscription: {
+        id: string;
+      };
+    };
+  };
+}
+
 export const getSubscriptionUrl = async (req: Request, res: Response) => {
   const { client } = req;
   const confirmationUrl = await client
     .mutate({
       mutation: RECURRING_CREATE(process.env.HOST!),
     })
-    .then(
-      (response: {
-        data: {
-          appSubscriptionCreate: {
-            confirmationUrl: string;
-            appSubscription: {
-              id: string;
-            };
-          };
-        };
-      }) => response.data.appSubscriptionCreate.confirmationUrl,
-    );
+    .then((response: Data) => response.data.appSubscriptionCreate.confirmationUrl);
 
   return res.redirect(confirmationUrl);
 };

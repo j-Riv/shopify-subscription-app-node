@@ -22,7 +22,17 @@ export function SELLING_PLAN_GROUP_DELETE() {
   `;
 }
 
-export const deleteSellingPlanGroup = async (req: Request) => {
+interface Data {
+  data: {
+    sellingPlanGroupDelete: SellingPlanGroupData;
+  };
+}
+
+interface SellingPlanGroupData {
+  deletedSellingPlanGroupId: string;
+}
+
+export const deleteSellingPlanGroup = async (req: Request): Promise<SellingPlanGroupData> => {
   const { client } = req;
   const body = req.body as {
     sellingPlanGroupId: string;
@@ -36,17 +46,9 @@ export const deleteSellingPlanGroup = async (req: Request) => {
       mutation: SELLING_PLAN_GROUP_DELETE(),
       variables: variables,
     })
-    .then(
-      (response: {
-        data: {
-          sellingPlanGroupDelete: {
-            deletedSellingPlanGroupId: string;
-          };
-        };
-      }) => {
-        return response.data.sellingPlanGroupDelete.deletedSellingPlanGroupId;
-      },
-    );
+    .then((response: Data) => {
+      return response.data.sellingPlanGroupDelete.deletedSellingPlanGroupId;
+    });
 
   return deletedSellingPlanGroupId;
 };
