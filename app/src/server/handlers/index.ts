@@ -21,6 +21,7 @@ import { getSubscriptionContract } from './queries/get-subscription-contract.js'
 import { getCustomerSubscriptionContractsById } from './queries/get-customer-subscription-contracts-by-id.js';
 import { getProductsById } from './queries/get-products-by-id.js';
 import { getProductVariantById } from './queries/get-product-variant-by-id.js';
+import { getDefaultLocation } from './queries/get-default-location.js';
 
 export {
   createClient,
@@ -46,4 +47,5 @@ export {
   getCustomerSubscriptionContractsById,
   getProductsById,
   getProductVariantById,
+  getDefaultLocation,
 };

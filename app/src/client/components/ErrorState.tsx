@@ -1,9 +1,11 @@
 import React from 'react';
 import { Card, EmptyState, Layout, Page, TextStyle } from '@shopify/polaris';
 
-function ErrorState(props: { err: string }) {
-  const { err } = props;
+interface Props {
+  err: string;
+}
 
+const ErrorState = ({ err }: Props) => {
   return (
     <Page>
       <Layout>
@@ -21,6 +23,6 @@ function ErrorState(props: { err: string }) {
       </Layout>
     </Page>
   );
-}
+};
 
 export default ErrorState;

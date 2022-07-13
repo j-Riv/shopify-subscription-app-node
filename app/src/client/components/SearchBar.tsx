@@ -4,7 +4,7 @@ import { SearchMinor } from '@shopify/polaris-icons';
 import { useAppBridge } from '@shopify/app-bridge-react';
 import { Redirect } from '@shopify/app-bridge/actions';
 
-function SearchBar() {
+const SearchBar = () => {
   const app = useAppBridge();
   const redirect = Redirect.create(app);
   const [searchValue, setSearchValue] = useState<null | string>('');
@@ -31,6 +31,6 @@ function SearchBar() {
       />
     </Form>
   );
-}
+};
 
 export default SearchBar;

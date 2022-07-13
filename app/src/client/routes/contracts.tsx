@@ -5,7 +5,7 @@ import { authenticatedFetch } from '@shopify/app-bridge-utils';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { formatDate, formatId } from '../utils/formatters';
 import Table from '../components/Table';
-import LoadingIndex from '../components/LoadingIndex';
+import LoadingContracts from '../components/LoadingContracts';
 import ErrorState from '../components/ErrorState';
 import SearchBar from '../components/SearchBar';
 import { getBadge } from '../utils/status';
@@ -95,7 +95,7 @@ const Contracts: React.FC = () => {
     getSubscriptions(selectedStatus);
   }, [getSubscriptions, selectedStatus]);
 
-  if (loading) return <LoadingIndex tableRows={5} />;
+  if (loading) return <LoadingContracts title="Subscriptions" />;
   if (error) return <ErrorState err={'Something went wrong ...'} />;
 
   const appRedirect = (href: string) => {

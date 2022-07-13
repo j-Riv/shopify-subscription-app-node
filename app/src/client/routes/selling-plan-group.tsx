@@ -5,7 +5,7 @@ import {
   Frame,
   Layout,
   Page,
-  Stack,
+  PageActions,
   TextField,
   TextStyle,
   Thumbnail,
@@ -326,23 +326,24 @@ function SellingPlanGroup() {
                 );
               })}
             </Layout.AnnotatedSection>
-            <Layout.Section>
-              <Stack distribution="trailing">
-                <UpdateSellingPlanGroupButton
-                  id={data.sellingPlanGroup.id}
-                  groupName={groupName}
-                  groupDescription={groupDescription}
-                  groupOptions={groupOptions}
-                  merchantCode={merchantCode}
-                  sellingPlans={sellingPlans}
-                  toggleActive={toggleActive}
-                  setMsg={setMsg}
-                  setToastError={setToastError}
-                  refetch={refetch}
-                />
-              </Stack>
-            </Layout.Section>
           </Layout>
+          <PageActions
+            primaryAction={
+              <UpdateSellingPlanGroupButton
+                id={data.sellingPlanGroup.id}
+                groupName={groupName}
+                groupDescription={groupDescription}
+                groupOptions={groupOptions}
+                merchantCode={merchantCode}
+                sellingPlans={sellingPlans}
+                toggleActive={toggleActive}
+                setMsg={setMsg}
+                setToastError={setToastError}
+                refetch={refetch}
+              />
+            }
+            secondaryActions={[{ content: 'Cancel', onAction: () => appRedirect() }]}
+          />
           {toastMarkup}
         </Frame>
       </Page>

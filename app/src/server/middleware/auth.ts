@@ -1,7 +1,8 @@
 import { Shopify } from '@shopify/shopify-api';
 import topLevelAuthRedirect from '../helpers/top-level-auth-redirect.js';
+import { storeActiveShop } from '../prisma-store.js';
 
-export default function applyAuthMiddleware(app, pgStorage) {
+export default function applyAuthMiddleware(app) {
   app.get('/auth', async (req, res) => {
     if (!req.signedCookies[app.get('top-level-oauth-cookie')]) {
       return res.redirect(`/auth/toplevel?${new URLSearchParams(req.query).toString()}`);
@@ -164,7 +165,12 @@ export default function applyAuthMiddleware(app, pgStorage) {
       // update active shops in db
       console.log('SAVING OFFLINE SESSION');
       // save offline token (session.accessToken)
-      pgStorage.storeActiveShop({
+      // pgStorage.storeActiveShop({
+      //   shop: session.shop,
+      //   scope: session.scope,
+      //   accessToken: session.accessToken,
+      // });
+      storeActiveShop({
         shop: session.shop,
         scope: session.scope,
         accessToken: session.accessToken,

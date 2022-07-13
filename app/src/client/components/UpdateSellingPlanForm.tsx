@@ -8,8 +8,7 @@ interface Props {
   index: number;
 }
 
-function UpdateSellingPlanForm(props: Props) {
-  const { sellingPlan, handleSellingPlans, index } = props;
+const UpdateSellingPlanForm = ({ sellingPlan, handleSellingPlans, index }: Props) => {
   const plan = sellingPlan.node;
   const planId = plan.id;
   // inital state values
@@ -134,6 +133,6 @@ function UpdateSellingPlanForm(props: Props) {
       </Layout>
     </Card>
   );
-}
+};
 
 export default UpdateSellingPlanForm;

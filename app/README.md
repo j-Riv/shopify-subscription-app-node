@@ -21,6 +21,20 @@ PG_PASSWORD = 'DATABASE_PASSWORD';
 PG_PORT = 'DATABASE_PORT';
 ```
 
+## Prisma
+
+Create the first migration:
+
+```
+prisma migrate dev --name init
+```
+
+Production and Testing Environments
+
+```
+npx prisma migrate deploy
+```
+
 ## Tests
 
 - Server callback test is failing, the auth flow was changed to handle both `online` and `offline` tokens. The test will have to be rewritten.

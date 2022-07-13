@@ -1,14 +1,31 @@
 import 'isomorphic-fetch';
 import pkg from '@apollo/client';
+import { ProductVariant } from '@shopify/app-bridge/actions/ResourcePicker';
 const { gql } = pkg;
 export function PRODUCT_VARIANT_BY_ID_GET() {
   return gql`
-    query productVariant($id: ID!) {
+    query productVariant($id: ID!, $locationId: ID!) {
       productVariant(id: $id) {
         id
         title
         sku
         inventoryQuantity
+        inventoryItem {
+          inventoryLevel(locationId: $locationId) {
+            available
+          }
+          inventoryLevels(first: 1) {
+            edges {
+              node {
+                available
+                location {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
         product {
           title
         }
@@ -17,30 +34,49 @@ export function PRODUCT_VARIANT_BY_ID_GET() {
   `;
 }
 
-export const getProductVariantById = async (client: any, id: string) => {
+interface Data {
+  data: {
+    productVariant: ProductVariantData;
+  };
+}
+
+interface ProductVariantData {
+  id: string;
+  title: string;
+  sku: string;
+  inventoryQuantity: number;
+  inventoryItem: {
+    inventoryLevel: {
+      available: number;
+    };
+    inventoryLevels: {
+      edges: {
+        node: {
+          available: number;
+        }[];
+      };
+    };
+  };
+  product: {
+    title: string;
+  };
+}
+
+export const getProductVariantById = async (
+  client: any,
+  id: string,
+  locationId: string,
+): Promise<ProductVariantData> => {
   const productVariant = await client
     .query({
       query: PRODUCT_VARIANT_BY_ID_GET(),
       variables: {
         id: id,
+        locationId: locationId,
       },
     })
-    .then(
-      (response: {
-        data: {
-          productVariant: {
-            id: string;
-            title: string;
-            sku: string;
-            inventoryQuantity: number;
-            product: {
-              title: string;
-            };
-          };
-        };
-      }) => {
-        return response.data.productVariant;
-      },
-    );
+    .then((response: Data) => {
+      return response.data.productVariant;
+    });
   return productVariant;
 };

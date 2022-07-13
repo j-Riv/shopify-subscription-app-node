@@ -11,6 +11,7 @@ import { ClientApplication, AppBridgeState } from '@shopify/app-bridge';
 // import HomePage from './components/HomePage';
 import Dashboard from './routes/dashboard';
 import Contracts from './routes/contracts';
+import PaymentFailures from './routes/payment-failures';
 import SellingPlanGroups from './routes/selling-plan-groups';
 import SellingPlanGroup from './routes/selling-plan-group';
 import Search from './routes/search';
@@ -67,6 +68,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/contracts" element={<Contracts />} />
+            <Route path="/payment-failures" element={<PaymentFailures />} />
             <Route path="/selling-plan-groups" element={<SellingPlanGroups />} />
             <Route path="/selling-plan-group" element={<SellingPlanGroup />} />
             <Route path="/search" element={<Search />} />

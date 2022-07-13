@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ActiveShops {
+  id          String @unique
+  scope       String
+  accessToken String
+}
+
+model SubscriptionContracts {
+  id                  String   @unique
+  shop                String
+  status              String
+  nextBillingDate     DateTime
+  interval            String
+  intervalCount       Int
+  paymentFailureCount Int      @default(0)
+  contract            Json
+}

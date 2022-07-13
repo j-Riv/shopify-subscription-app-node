@@ -5,7 +5,18 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { Shopify, ApiVersion } from '@shopify/shopify-api';
 import RedisStore from './redis-store.js';
-import PgStore from './pg-store.js';
+import {
+  loadActiveShops,
+  deleteActiveShop,
+  createContract,
+  loadCurrentShop,
+  updateContract,
+  updateSubscriptionContractAfterFailure,
+  updateSubscriptionContractAfterSuccess,
+  getSubscriptionsByStatus,
+  getAllPaymentFailures,
+  saveAllContracts,
+} from './prisma-store.js';
 import Logger from './logger.js';
 import { scheduler } from './scheduler.js';
 import 'dotenv/config';
@@ -26,7 +37,6 @@ const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD;
 
 // Create a new instance of the custom storage class
 const sessionStorage = new RedisStore();
-const pgStorage = new PgStore();
 
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
@@ -49,13 +59,13 @@ Shopify.Context.initialize({
 // to re - login when your server restarts.You should
 // persist this object in your app.
 // const ACTIVE_SHOPIFY_SHOPS = {};
-const ACTIVE_SHOPIFY_SHOPS = await pgStorage.loadActiveShops();
+const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
 // console.log('LOADING ACTIVE SHOPS FROM DB', ACTIVE_SHOPIFY_SHOPS);
 Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     delete ACTIVE_SHOPIFY_SHOPS[shop];
-    pgStorage.deleteActiveShop(shop);
+    deleteActiveShop(shop);
   },
 });
 
@@ -67,10 +77,10 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_CREATE', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Contract Create Webhook`);
-    const shopData = await pgStorage.loadCurrentShop(shop);
+    const shopData = await loadCurrentShop(shop);
     if (shopData) {
       const token = shopData.accessToken;
-      pgStorage.createContract(shop, token, body);
+      createContract(shop, token, body);
     }
   },
 });
@@ -79,10 +89,10 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_UPDATE', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Contract Update Webhook`);
-    const shopData = await pgStorage.loadCurrentShop(shop);
+    const shopData = await loadCurrentShop(shop);
     if (shopData) {
       const token = shopData.accessToken;
-      const success = await pgStorage.updateContract(shop, token, body);
+      const success = await updateContract(shop, token, body);
       Logger.log('info', `Subscription Contract Update: ${success}`);
     }
   },
@@ -92,10 +102,10 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_SUCCESS', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Billing Attempt Success Webhook`);
-    const shopData = await pgStorage.loadCurrentShop(shop);
+    const shopData = await loadCurrentShop(shop);
     if (shopData) {
       const token = shopData.accessToken;
-      pgStorage.updateSubscriptionContractAfterSuccess(shop, token, body);
+      updateSubscriptionContractAfterSuccess(shop, token, body);
     }
   },
 });
@@ -104,7 +114,7 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE', {
   path: '/webhooks',
   webhookHandler: async (topic, shop, body) => {
     Logger.log('info', `Subscription Billing Attempt Failure Webhook`);
-    const shopData = await pgStorage.loadCurrentShop(shop);
+    const shopData = await loadCurrentShop(shop);
     if (shopData) {
       const token = shopData.accessToken;
       const data = JSON.parse(body);
@@ -119,10 +129,10 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE', {
         data.errorCode === 'UNEXPECTED_ERROR'
       ) {
         // will try again tomorrow
-        pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, false);
+        updateSubscriptionContractAfterFailure(shop, token, body, false);
       } else {
         // get payment method id and send email
-        pgStorage.updateSubscriptionContractAfterFailure(shop, token, body, true);
+        updateSubscriptionContractAfterFailure(shop, token, body, true);
       }
       // Will more than likely create  an errors table to display error notifications to user.
       Logger.log('error', JSON.stringify(body));
@@ -146,7 +156,7 @@ export const createServer = async (
 
   app.use(cors());
 
-  applyAuthMiddleware(app, pgStorage);
+  applyAuthMiddleware(app);
 
   app.post('/webhooks', async (req, res) => {
     try {
@@ -191,7 +201,7 @@ export const createServer = async (
     const { shop, accessToken } = session;
     try {
       Logger.log('info', `Syncing contracts for shop: ${shop}`);
-      const response = await pgStorage.saveAllContracts(shop, accessToken);
+      const response = await saveAllContracts(shop, accessToken);
       res.status(200).json(response);
     } catch (err: any) {
       Logger.log('error', err.message);
@@ -203,7 +213,7 @@ export const createServer = async (
     const { shop, accessToken } = session;
     try {
       Logger.log('info', `getting all contracts for shop: ${shop}`);
-      const response = await pgStorage.getSubscriptionsByStatus(shop, JSON.stringify(req.body));
+      const response = await getSubscriptionsByStatus(shop, JSON.stringify(req.body));
       res.status(200).json(response);
     } catch (err: any) {
       Logger.log('error', err.message);
@@ -213,7 +223,7 @@ export const createServer = async (
   app.get('/payment-failed', verifyRequest(app), async (req, res, next) => {
     const session = await Shopify.Utils.loadCurrentSession(req, res, true);
     const { shop } = session;
-    const contracts = await pgStorage.getAllPaymentFailures(shop);
+    const contracts = await getAllPaymentFailures(shop);
     res.status(200).json({ contracts });
   });
   // end move

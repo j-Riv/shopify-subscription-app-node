@@ -19,8 +19,15 @@ interface Props {
   refetch: () => void;
 }
 
-function UpdateSubscriptionButton(props: Props) {
-  const { contractId, input, lineId, toggleActive, setMsg, setToastError, refetch } = props;
+const UpdateSubscriptionButton = ({
+  contractId,
+  input,
+  lineId,
+  toggleActive,
+  setMsg,
+  setToastError,
+  refetch,
+}: Props) => {
   const [loading, setLoading] = useState<boolean>(false);
   // Update subscription contract -> draft id
   const [updateSubscriptionContract] = useMutation(UPDATE_SUBSCRIPTION_CONTRACT, {
@@ -152,6 +159,6 @@ function UpdateSubscriptionButton(props: Props) {
       Update
     </Button>
   );
-}
+};
 
 export default UpdateSubscriptionButton;
