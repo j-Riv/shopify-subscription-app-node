@@ -23,6 +23,12 @@ PG_PORT = 'DATABASE_PORT';
 
 ## Prisma
 
+prisma/.env
+
+```
+DATABASE_URL="postgresql://user:password@localhost:5432/database"
+```
+
 Create the first migration:
 
 ```

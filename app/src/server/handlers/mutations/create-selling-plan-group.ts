@@ -114,7 +114,6 @@ const createInput = (body: Body) => {
 
   const variables = {
     input: {
-      appId: process.env.APP_ID,
       name: planGroupName,
       merchantCode: merchantCode, // 'subscribe-and-save'
       description: planGroupDescription,
