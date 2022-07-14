@@ -566,14 +566,14 @@ export const getAllPaymentFailures = async (shop: string) => {
       where: {
         AND: {
           shop: shop,
+          status: 'ACTIVE',
           contract: {
             path: ['lastPaymentStatus'],
-            not: 'SUCCEDED',
+            equals: 'FAILED',
           },
         },
       },
     });
-    console.log('PAYMENT FAILURS', paymentFailures);
 
     return paymentFailures;
   } catch (err: any) {
