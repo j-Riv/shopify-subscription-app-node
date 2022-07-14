@@ -26,7 +26,7 @@ function Dashboard() {
     <Toast content={toastMsg} onDismiss={toggleActive} error={isError} />
   ) : null;
   // set subscriptions per page
-  const subsPerPage = 1;
+  const subsPerPage = 20;
   // search state
   const app = useAppBridge();
   const redirect = Redirect.create(app);
