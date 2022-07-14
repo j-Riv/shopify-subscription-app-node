@@ -44,7 +44,17 @@ const MyProvider: React.FC<Props> = ({ children }) => {
   const app = useAppBridge();
 
   const client = new ApolloClient({
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            subscriptionContracts: {
+              keyArgs: false,
+            },
+          },
+        },
+      },
+    }),
     link: new HttpLink({
       credentials: 'include',
       fetch: userLoggedInFetch(app),

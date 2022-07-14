@@ -119,7 +119,7 @@ export const createLocalContract = async (shop: string, contract: any) => {
       data: {
         id: contract.id,
         shop: shop,
-        status: contract.shop,
+        status: contract.status,
         nextBillingDate: contract.nextBillingDate,
         interval: interval,
         intervalCount: intervalCount,
