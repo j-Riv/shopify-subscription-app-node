@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "./app_proxy/static/css/main.aebeee04.chunk.css",
+    "main.js": "./app_proxy/static/js/main.577a4f08.chunk.js",
+    "main.js.map": "./app_proxy/static/js/main.577a4f08.chunk.js.map",
+    "runtime-main.js": "./app_proxy/static/js/runtime-main.4864d646.js",
+    "runtime-main.js.map": "./app_proxy/static/js/runtime-main.4864d646.js.map",
+    "static/js/2.5f3c4456.chunk.js": "./app_proxy/static/js/2.5f3c4456.chunk.js",
+    "static/js/2.5f3c4456.chunk.js.map": "./app_proxy/static/js/2.5f3c4456.chunk.js.map",
+    "static/js/3.8baf665b.chunk.js": "./app_proxy/static/js/3.8baf665b.chunk.js",
+    "static/js/3.8baf665b.chunk.js.map": "./app_proxy/static/js/3.8baf665b.chunk.js.map",
+    "index.html": "./app_proxy/index.html",
+    "static/css/main.aebeee04.chunk.css.map": "./app_proxy/static/css/main.aebeee04.chunk.css.map",
+    "static/js/2.5f3c4456.chunk.js.LICENSE.txt": "./app_proxy/static/js/2.5f3c4456.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.4864d646.js",
+    "static/js/2.5f3c4456.chunk.js",
+    "static/css/main.aebeee04.chunk.css",
+    "static/js/main.577a4f08.chunk.js"
+  ]
+}
