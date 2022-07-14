@@ -1,7 +1,7 @@
 # Dockerfile
 
 # base image
-FROM node:16.14.2-alpine
+FROM node:16.14.2-buster
 
 # create & set working directory
 RUN mkdir -p /usr/app
