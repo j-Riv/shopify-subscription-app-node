@@ -57,10 +57,8 @@ data/redis/*
 data/traefik/*
 !data/traefik/.gitkeep
 app/app_proxy/*
+!app/app_proxy/.gitkeep
 
 NOTES.md
 CHANGES.md
 /app/server/config/
-
-/proxy/*
-!/proxy/.gitkeep

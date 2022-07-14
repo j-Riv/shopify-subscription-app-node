@@ -56,10 +56,6 @@ const proxyRoutes = async (app: Express) => {
   app.use(serveStatic(resolve('proxy/build')));
   // end new
 
-  // send react app as liquid
-  app.get('/app_proxy', validateSignature, liquidApplicationProxy);
-  // app.get('/app_proxy/', validateSignature, applicationProxy);
-
   app.get('/app_proxy/static/css/:file', (req: Request, res: Response) => {
     res
       .status(200)
@@ -73,6 +69,10 @@ const proxyRoutes = async (app: Express) => {
       .set('Content-Type', 'text/javascript')
       .send(fs.readFileSync(`${process.env.APP_PROXY}/build/static/js/${req.params.file}`));
   });
+
+  // send react app as liquid
+  app.get('/app_proxy', validateSignature, liquidApplicationProxy);
+  // app.get('/app_proxy/', validateSignature, applicationProxy);
 };
 
 export default proxyRoutes;

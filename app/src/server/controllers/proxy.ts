@@ -287,7 +287,6 @@ export const generateCustomerAuth = async (req: Request, res: Response) => {
     // generate email
     // disabled since we now just redirect with jwt
     // const emailResponse = await sendMailGun(shop, customer_email, url);
-    console.log('SENDING URL BACK TO CUSTOMER');
     res.status(200).json({ url: url });
   } else {
     console.log('NO SHOP OR CUSTOMER ID SUPPLIED');
