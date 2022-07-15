@@ -86,6 +86,11 @@ export const runBillingAttempts = async () => {
             client,
             contract.id,
           );
+          console.log('SHOPIFY CONTRACT DATE', shopifyContract.nextBillingDate.split('T')[0]);
+          console.log(
+            'LOCAL CONTRACT DATE',
+            contract.nextBillingDate.toISOString().substring(0, 10),
+          );
           if (
             shopifyContract.nextBillingDate.split('T')[0] ===
             contract.nextBillingDate.toISOString().substring(0, 10)
@@ -99,16 +104,27 @@ export const runBillingAttempts = async () => {
                 'info',
                 `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
               );
+              console.log(
+                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+              );
               const variantProduct = await getProductVariantById(
                 client,
                 line.node.variantId,
                 defaultLocationId,
               );
+              console.log('VARIANT PRODUCT RESPONSE', variantProduct);
               const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
+              Logger.log(
+                'info',
+                `Variant: ${variantProduct.product.title}: ${JSON.stringify(variantAvailable)}`,
+              );
               // const variantAvailable =
               //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
               Logger.log(
                 'info',
+                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+              );
+              console.log(
                 `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
               );
               if (variantAvailable <= line.node.quantity) {
