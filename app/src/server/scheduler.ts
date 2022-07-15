@@ -91,48 +91,54 @@ export const runBillingAttempts = async () => {
             'LOCAL CONTRACT DATE',
             contract.nextBillingDate.toISOString().substring(0, 10),
           );
+          // shopifyContract.nextBillingDate.split('T')[0] ===
           if (
-            shopifyContract.nextBillingDate.split('T')[0] ===
+            contract.nextBillingDate.toISOString().substring(0, 10) ===
             contract.nextBillingDate.toISOString().substring(0, 10)
           ) {
             // check if quantity exists
-            let oosProducts: string[] = [];
             const defaultLocation = await getDefaultLocation(client);
             const defaultLocationId = defaultLocation.id;
-            shopifyContract.lines.edges.forEach(async (line: SubscriptionLine) => {
-              Logger.log(
-                'info',
-                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
-              );
-              console.log(
-                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
-              );
-              const variantProduct = await getProductVariantById(
-                client,
-                line.node.variantId,
-                defaultLocationId,
-              );
-              console.log('VARIANT PRODUCT RESPONSE', variantProduct);
-              const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
-              Logger.log(
-                'info',
-                `Variant: ${variantProduct.product.title}: ${JSON.stringify(variantAvailable)}`,
-              );
-              // const variantAvailable =
-              //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
-              Logger.log(
-                'info',
-                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
-              );
-              console.log(
-                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
-              );
-              if (variantAvailable <= line.node.quantity) {
-                Logger.log('info', `FOUND OUT OF STOCK ITEM ${line.node.variantId}`);
-                oosProducts.push(variantProduct.product.title);
-              }
-            });
+
+            let oosProducts: string[] = [];
+            await Promise.all(
+              shopifyContract.lines.edges.map(async (line: SubscriptionLine) => {
+                Logger.log(
+                  'info',
+                  `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+                );
+                console.log(
+                  `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+                );
+                const variantProduct = await getProductVariantById(
+                  client,
+                  line.node.variantId,
+                  defaultLocationId,
+                );
+                const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
+                Logger.log(
+                  'info',
+                  `Variant: ${variantProduct.product.title}: ${JSON.stringify(variantAvailable)}`,
+                );
+                // const variantAvailable =
+                //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
+                Logger.log(
+                  'info',
+                  `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+                );
+                console.log(
+                  `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+                );
+                if (variantAvailable <= line.node.quantity) {
+                  Logger.log('info', `FOUND OUT OF STOCK ITEM ${variantProduct.product.title}`);
+                  oosProducts.push(variantProduct.product.title);
+                }
+              }),
+            );
+
             // create billing attempt
+            console.log('OOS PRODUCTS', oosProducts);
+            console.log('OOS PRODUCTS LENGTH', oosProducts.length);
             if (oosProducts.length === 0) {
               const billingAttempt = await createSubscriptionBillingAttempt(client, contract.id);
               Logger.log(
