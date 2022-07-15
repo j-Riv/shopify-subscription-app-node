@@ -91,9 +91,9 @@ export const runBillingAttempts = async () => {
             'LOCAL CONTRACT DATE',
             contract.nextBillingDate.toISOString().substring(0, 10),
           );
-          // shopifyContract.nextBillingDate.split('T')[0] ===
+
           if (
-            contract.nextBillingDate.toISOString().substring(0, 10) ===
+            shopifyContract.nextBillingDate.split('T')[0] ===
             contract.nextBillingDate.toISOString().substring(0, 10)
           ) {
             // check if quantity exists
