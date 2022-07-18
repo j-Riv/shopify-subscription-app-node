@@ -24,6 +24,9 @@ import Logger from './logger.js';
 import { SubscriptionContract, SubscriptionLine } from './types/subscriptions';
 dotenv.config();
 
+// globals
+const RENEWAL_NOTIFICATION_DAYS = 5;
+
 export const scheduler = () => {
   runBillingAttempts();
   // Logger.log('info', `Scheduler initialized ...`);
@@ -49,16 +52,10 @@ export const scheduler = () => {
     runCancellation();
   });
 
-  // const renewalNotificationJob = schedule.scheduleJob(
-  //   everyday10am,
-  //   async function () {
-  //     Logger.log(
-  //       'info',
-  //       `Running Renewal Notification Sync Rule: ${everyday10am}`
-  //     );
-  //     runRenewalNotification();
-  //   }
-  // );
+  const renewalNotificationJob = schedule.scheduleJob(everyday10am, async function () {
+    Logger.log('info', `Running Renewal Notification Sync Rule: ${everyday10am}`);
+    runRenewalNotification();
+  });
 };
 
 export const runBillingAttempts = async () => {
@@ -85,11 +82,6 @@ export const runBillingAttempts = async () => {
           const shopifyContract: SubscriptionContract = await getSubscriptionContract(
             client,
             contract.id,
-          );
-          console.log('SHOPIFY CONTRACT DATE', shopifyContract.nextBillingDate.split('T')[0]);
-          console.log(
-            'LOCAL CONTRACT DATE',
-            contract.nextBillingDate.toISOString().substring(0, 10),
           );
 
           if (
@@ -214,7 +206,7 @@ export const runRenewalNotification = async () => {
     const token = shopData.accessToken;
     // get all active contracts for shop
     const now = new Date();
-    now.setDate(now.getDate() + 7);
+    now.setDate(now.getDate() + RENEWAL_NOTIFICATION_DAYS);
     const nextBillingDate = new Date(now).toISOString().substring(0, 10);
     const contracts = await getLocalContractsRenewingSoonByShop(shop, nextBillingDate);
     if (contracts) {

@@ -1,7 +1,38 @@
 import 'isomorphic-fetch';
 import pkg from '@apollo/client';
-import { ProductVariant } from '@shopify/app-bridge/actions/ResourcePicker';
 const { gql } = pkg;
+// export function PRODUCT_VARIANT_BY_ID_GET() {
+//   return gql`
+//     query productVariant($id: ID!, $locationId: ID!) {
+//       productVariant(id: $id) {
+//         id
+//         title
+//         sku
+//         inventoryQuantity
+//         inventoryItem {
+//           inventoryLevel(locationId: $locationId) {
+//             available
+//           }
+//           inventoryLevels(first: 1) {
+//             edges {
+//               node {
+//                 available
+//                 location {
+//                   id
+//                   name
+//                 }
+//               }
+//             }
+//           }
+//         }
+//         product {
+//           title
+//         }
+//       }
+//     }
+//   `;
+// }
+
 export function PRODUCT_VARIANT_BY_ID_GET() {
   return gql`
     query productVariant($id: ID!, $locationId: ID!) {
@@ -9,20 +40,11 @@ export function PRODUCT_VARIANT_BY_ID_GET() {
         id
         title
         sku
-        inventoryQuantity
         inventoryItem {
           inventoryLevel(locationId: $locationId) {
             available
-          }
-          inventoryLevels(first: 1) {
-            edges {
-              node {
-                available
-                location {
-                  id
-                  name
-                }
-              }
+            location {
+              name
             }
           }
         }
