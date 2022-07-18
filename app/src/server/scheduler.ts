@@ -29,32 +29,46 @@ const RENEWAL_NOTIFICATION_DAYS = 5;
 
 export const scheduler = () => {
   runBillingAttempts();
-  // runRenewalNotification();
+  runRenewalNotification();
   // Logger.log('info', `Scheduler initialized ...`);
-  const every10sec = '*/10 * * * *'; // every 10 seconds for testing
-  const everymin = '*/1 * * * *'; // every min
-  const everyday3am = '0 0 3 * * *'; // every day at 1 am
-  const everyday6am = '0 0 6 * * *'; // every day at 6 am
-  const everyday10am = '0 0 10 * * *'; // every day at 10 am
-  const everyday12am = '0 0 0 * * *'; // every day at 12 am
-  const everyhour = '0 0 */2 * * *'; // every 2 hours
+  // const everyday2hours = '0 0 */2 * * *';
 
-  const scheduleJob = schedule.scheduleJob(everyday6am, async function () {
-    Logger.log('info', `Running Billing Attempt Rule: ${everyday6am}`);
+  const everyday6amRule = new schedule.RecurrenceRule();
+  everyday6amRule.hour = 6;
+  everyday6amRule.minute = 0;
+  everyday6amRule.tz = 'America/Los_Angeles';
+
+  const scheduleJob = schedule.scheduleJob(everyday6amRule, async function () {
+    Logger.log('info', `Running Billing Attempt Rule: ${everyday6amRule}`);
     runBillingAttempts();
   });
-  const syncJob = schedule.scheduleJob(everyhour, async function () {
-    Logger.log('info', `Running Contract Sync Rule: ${everyhour}`);
+
+  const everyHourRule = new schedule.RecurrenceRule();
+  everyHourRule.minute = 30;
+  everyHourRule.tz = 'America/Los_Angeles';
+
+  const syncJob = schedule.scheduleJob(everyHourRule, async function () {
+    Logger.log('info', `Running Contract Sync Rule: ${everyHourRule}`);
     runSubscriptionContractSync();
   });
 
-  const cleanupJob = schedule.scheduleJob(everyday3am, async function () {
-    Logger.log('info', `Running Cleanup Sync Rule: ${everyday3am}`);
+  const everyday3amRule = new schedule.RecurrenceRule();
+  everyday3amRule.hour = 3;
+  everyday3amRule.minute = 0;
+  everyday3amRule.tz = 'America/Los_Angeles';
+
+  const cleanupJob = schedule.scheduleJob(everyday3amRule, async function () {
+    Logger.log('info', `Running Cleanup Sync Rule: ${everyday3amRule}`);
     runCancellation();
   });
 
-  const renewalNotificationJob = schedule.scheduleJob(everyday10am, async function () {
-    Logger.log('info', `Running Renewal Notification Sync Rule: ${everyday10am}`);
+  const everyday10amRule = new schedule.RecurrenceRule();
+  everyday10amRule.hour = 10;
+  everyday10amRule.minute = 0;
+  everyday10amRule.tz = 'America/Los_Angeles';
+
+  const renewalNotificationJob = schedule.scheduleJob(everyday10amRule, async function () {
+    Logger.log('info', `Running Renewal Notification Sync Rule: ${everyday10amRule}`);
     runRenewalNotification();
   });
 };
