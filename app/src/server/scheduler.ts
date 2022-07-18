@@ -227,7 +227,7 @@ export const runRenewalNotification = async () => {
             shop,
             shopifyContract.customer.email,
             shopifyContract.customer.firstName,
-            shopifyContract.nextBillingDate,
+            shopifyContract.nextBillingDate.split('T')[0],
           );
         } catch (err: any) {
           Logger.log('error', err.message);
