@@ -207,7 +207,7 @@ export const runRenewalNotification = async () => {
     // get all active contracts for shop
     const now = new Date();
     now.setDate(now.getDate() + RENEWAL_NOTIFICATION_DAYS);
-    const nextBillingDate = new Date(now).toISOString().substring(0, 10);
+    const nextBillingDate = new Date(now).toISOString().split('T')[0] + 'T00:00:00Z';
     const contracts = await getLocalContractsRenewingSoonByShop(shop, nextBillingDate);
     if (contracts) {
       Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWEING SOON`);
