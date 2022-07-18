@@ -18,7 +18,7 @@ import {
   saveAllContracts,
 } from './prisma-store.js';
 import Logger from './logger.js';
-import { scheduler, runRenewalNotification } from './scheduler.js';
+import { scheduler } from './scheduler.js';
 import 'dotenv/config';
 
 import applyAuthMiddleware from './middleware/auth.js';
@@ -71,7 +71,6 @@ Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
 
 // init scheduler
 scheduler();
-runRenewalNotification();
 
 // webhook handlers
 Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_CREATE', {

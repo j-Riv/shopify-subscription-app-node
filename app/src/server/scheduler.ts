@@ -29,6 +29,7 @@ const RENEWAL_NOTIFICATION_DAYS = 5;
 
 export const scheduler = () => {
   runBillingAttempts();
+  // runRenewalNotification();
   // Logger.log('info', `Scheduler initialized ...`);
   const every10sec = '*/10 * * * *'; // every 10 seconds for testing
   const everymin = '*/1 * * * *'; // every min
