@@ -41,8 +41,10 @@ export const sendMailGunPaymentFailure = async (
   name: string,
   nextBillingDate: string,
 ) => {
-  const subject = `Subscription Payment Failure`;
-  const message = `<p>Hello ${name}, your subscription payment has failed. We will try again on ${nextBillingDate}. To update your payment method, log into your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.</p>`;
+  const subject = `We coudn't process your subscription payment`;
+  const message = `<p>Hello ${name}, there was a problem processing your subscription payment. We will try to run your card again on ${formatDateForEmail(
+    nextBillingDate,
+  )}. To update your payment method, log into your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.</p>`;
 
   const mg = mailgun({
     apiKey: process.env.MAILGUN_API_KEY,
@@ -87,7 +89,7 @@ export const sendMailGunPause = async (
     from: `${process.env.MAILGUN_SENDER} <no-reply@${process.env.MAILGUN_DOMAIN}>`,
     to: `${email}`,
     bcc: `${process.env.MAILGUN_ADMIN_EMAIL}`,
-    subject: 'Subscription Has Been Paused Due To Item(s) Being Out Of Stock',
+    subject: 'Your subscription has neen paused due to item(s) being out of stock',
     html: `
       <p>Subscription (${
         id[id.length - 1]
@@ -118,8 +120,10 @@ export const sendMailGunRenew = async (
     from: `${process.env.MAILGUN_SENDER} <no-reply@${process.env.MAILGUN_DOMAIN}>`,
     to: `${email}`,
     bcc: `${process.env.MAILGUN_ADMIN_EMAIL}`,
-    subject: `Subscription Will Renew Soon`,
-    html: `Hello ${name}, Your subscription will automatically renew on ${nextBillingDate}. To manage your subscriptions, log in to your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.`,
+    subject: `Your subscription will renew soon`,
+    html: `Hello ${name}, This is a friendly reminder that your subscription will automatically renew on ${formatDateForEmail(
+      nextBillingDate,
+    )}. To manage your subscriptions, log in to your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.`,
   };
   Logger.log('info', `Sending MailGun Subscription Renewal Soon`);
   mg.messages().send(data, function (error, body) {
@@ -127,4 +131,10 @@ export const sendMailGunRenew = async (
     Logger.log('info', `MailGun Subscription Renewal Soon Response: ${body.message}`);
     return body.message;
   });
+};
+
+export const formatDateForEmail = (date: string) => {
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const billingDate = new Date(date) as any;
+  return billingDate.toLocaleDateString('en-us', options);
 };

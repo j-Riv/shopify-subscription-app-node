@@ -24,41 +24,53 @@ import Logger from './logger.js';
 import { SubscriptionContract, SubscriptionLine } from './types/subscriptions';
 dotenv.config();
 
+// globals
+const RENEWAL_NOTIFICATION_DAYS = 5;
+
 export const scheduler = () => {
   runBillingAttempts();
+  runRenewalNotification();
   // Logger.log('info', `Scheduler initialized ...`);
-  const every10sec = '*/10 * * * *'; // every 10 seconds for testing
-  const everymin = '*/1 * * * *'; // every min
-  const everyday3am = '0 0 3 * * *'; // every day at 1 am
-  const everyday6am = '0 0 6 * * *'; // every day at 6 am
-  const everyday10am = '0 0 10 * * *'; // every day at 10 am
-  const everyday12am = '0 0 0 * * *'; // every day at 12 am
-  const everyhour = '0 0 */2 * * *'; // every 2 hours
+  // const everyday2hours = '0 0 */2 * * *';
 
-  const scheduleJob = schedule.scheduleJob(everyday6am, async function () {
-    Logger.log('info', `Running Billing Attempt Rule: ${everyday6am}`);
+  const everyday6amRule = new schedule.RecurrenceRule();
+  everyday6amRule.hour = 6;
+  everyday6amRule.minute = 0;
+  everyday6amRule.tz = 'America/Los_Angeles';
+
+  const scheduleJob = schedule.scheduleJob(everyday6amRule, async function () {
+    Logger.log('info', `Running Billing Attempt Rule: ${everyday6amRule}`);
     runBillingAttempts();
   });
-  const syncJob = schedule.scheduleJob(everyhour, async function () {
-    Logger.log('info', `Running Contract Sync Rule: ${everyhour}`);
+
+  const everyHourRule = new schedule.RecurrenceRule();
+  everyHourRule.minute = 30;
+  everyHourRule.tz = 'America/Los_Angeles';
+
+  const syncJob = schedule.scheduleJob(everyHourRule, async function () {
+    Logger.log('info', `Running Contract Sync Rule: ${everyHourRule}`);
     runSubscriptionContractSync();
   });
 
-  const cleanupJob = schedule.scheduleJob(everyday3am, async function () {
-    Logger.log('info', `Running Cleanup Sync Rule: ${everyday3am}`);
+  const everyday3amRule = new schedule.RecurrenceRule();
+  everyday3amRule.hour = 3;
+  everyday3amRule.minute = 0;
+  everyday3amRule.tz = 'America/Los_Angeles';
+
+  const cleanupJob = schedule.scheduleJob(everyday3amRule, async function () {
+    Logger.log('info', `Running Cleanup Sync Rule: ${everyday3amRule}`);
     runCancellation();
   });
 
-  // const renewalNotificationJob = schedule.scheduleJob(
-  //   everyday10am,
-  //   async function () {
-  //     Logger.log(
-  //       'info',
-  //       `Running Renewal Notification Sync Rule: ${everyday10am}`
-  //     );
-  //     runRenewalNotification();
-  //   }
-  // );
+  const everyday10amRule = new schedule.RecurrenceRule();
+  everyday10amRule.hour = 10;
+  everyday10amRule.minute = 0;
+  everyday10amRule.tz = 'America/Los_Angeles';
+
+  const renewalNotificationJob = schedule.scheduleJob(everyday10amRule, async function () {
+    Logger.log('info', `Running Renewal Notification Sync Rule: ${everyday10amRule}`);
+    runRenewalNotification();
+  });
 };
 
 export const runBillingAttempts = async () => {
@@ -86,37 +98,54 @@ export const runBillingAttempts = async () => {
             client,
             contract.id,
           );
+
           if (
             shopifyContract.nextBillingDate.split('T')[0] ===
             contract.nextBillingDate.toISOString().substring(0, 10)
           ) {
             // check if quantity exists
-            let oosProducts: string[] = [];
             const defaultLocation = await getDefaultLocation(client);
             const defaultLocationId = defaultLocation.id;
-            shopifyContract.lines.edges.forEach(async (line: SubscriptionLine) => {
-              Logger.log(
-                'info',
-                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
-              );
-              const variantProduct = await getProductVariantById(
-                client,
-                line.node.variantId,
-                defaultLocationId,
-              );
-              const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
-              // const variantAvailable =
-              //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
-              Logger.log(
-                'info',
-                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
-              );
-              if (variantAvailable <= line.node.quantity) {
-                Logger.log('info', `FOUND OUT OF STOCK ITEM ${line.node.variantId}`);
-                oosProducts.push(variantProduct.product.title);
-              }
-            });
+
+            let oosProducts: string[] = [];
+            await Promise.all(
+              shopifyContract.lines.edges.map(async (line: SubscriptionLine) => {
+                Logger.log(
+                  'info',
+                  `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+                );
+                console.log(
+                  `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+                );
+                const variantProduct = await getProductVariantById(
+                  client,
+                  line.node.variantId,
+                  defaultLocationId,
+                );
+                const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
+                Logger.log(
+                  'info',
+                  `Variant: ${variantProduct.product.title}: ${JSON.stringify(variantAvailable)}`,
+                );
+                // const variantAvailable =
+                //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
+                Logger.log(
+                  'info',
+                  `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+                );
+                console.log(
+                  `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+                );
+                if (variantAvailable <= line.node.quantity) {
+                  Logger.log('info', `FOUND OUT OF STOCK ITEM ${variantProduct.product.title}`);
+                  oosProducts.push(variantProduct.product.title);
+                }
+              }),
+            );
+
             // create billing attempt
+            console.log('OOS PRODUCTS', oosProducts);
+            console.log('OOS PRODUCTS LENGTH', oosProducts.length);
             if (oosProducts.length === 0) {
               const billingAttempt = await createSubscriptionBillingAttempt(client, contract.id);
               Logger.log(
@@ -192,8 +221,8 @@ export const runRenewalNotification = async () => {
     const token = shopData.accessToken;
     // get all active contracts for shop
     const now = new Date();
-    now.setDate(now.getDate() + 7);
-    const nextBillingDate = new Date(now).toISOString().substring(0, 10);
+    now.setDate(now.getDate() + RENEWAL_NOTIFICATION_DAYS);
+    const nextBillingDate = new Date(now).toISOString().split('T')[0] + 'T00:00:00Z';
     const contracts = await getLocalContractsRenewingSoonByShop(shop, nextBillingDate);
     if (contracts) {
       Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWEING SOON`);
@@ -213,7 +242,7 @@ export const runRenewalNotification = async () => {
             shop,
             shopifyContract.customer.email,
             shopifyContract.customer.firstName,
-            nextBillingDate,
+            shopifyContract.nextBillingDate.split('T')[0],
           );
         } catch (err: any) {
           Logger.log('error', err.message);
