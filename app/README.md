@@ -46,7 +46,10 @@ NODE_ENV="development or production"
 prisma/.env
 
 ```
+# Local
 DATABASE_URL="postgresql://user:password@localhost:5432/database"
+# Docker
+DATABASE_URL="postgresql://user:password@postgres:5432/database"
 ```
 
 Create the first migration:

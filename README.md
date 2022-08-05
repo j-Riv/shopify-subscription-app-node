@@ -123,7 +123,7 @@ docker system prune
 ```
 
 ## App Proxy
-App Proxy will be served from `/proxy/build`.
+App Proxy will be served from `/app/app_proxy` or if Docker Container `/usr/app/app_proxy`.
 
 ## Logs
 
