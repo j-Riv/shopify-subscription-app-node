@@ -29,7 +29,7 @@ const RENEWAL_NOTIFICATION_DAYS = 5;
 
 export const scheduler = () => {
   runBillingAttempts();
-  runRenewalNotification();
+  // runRenewalNotification();
   // Logger.log('info', `Scheduler initialized ...`);
   // const everyday2hours = '0 0 */2 * * *';
 
