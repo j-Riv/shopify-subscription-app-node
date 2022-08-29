@@ -93,7 +93,7 @@ Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_UPDATE', {
     if (shopData) {
       const token = shopData.accessToken;
       const success = await updateContract(shop, token, body);
-      Logger.log('info', `Subscription Contract Update: ${success}`);
+      Logger.log('info', `Subscription Contract Update: ${JSON.stringify(success)}`);
     }
   },
 });

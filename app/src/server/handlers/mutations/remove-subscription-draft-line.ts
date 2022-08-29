@@ -8,7 +8,7 @@ export function SUBSCRIPTION_DRAFT_LINE_REMOVE() {
         draft {
           id
         }
-        lineUpdated {
+        lineRemoved {
           id
         }
         userErrors {
