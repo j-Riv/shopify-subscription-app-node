@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { unstable_batchedUpdates } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import {
   Badge,
@@ -8,6 +9,7 @@ import {
   Page,
   Select,
   Stack,
+  TextContainer,
   TextField,
   TextStyle,
   Toast,
@@ -60,10 +62,11 @@ function EditSubscription() {
   const toggleActive = useCallback(() => setActive((active) => !active), []);
   const setMsg = useCallback((msg) => setToastMsg(msg), []);
   const setToastError = useCallback((error) => setIsError(error), []);
-  // Toast
-  const toastMarkup = active ? (
-    <Toast content={toastMsg} onDismiss={toggleActive} error={isError} />
-  ) : null;
+
+  const toastMarkup = useMemo(
+    () => (active ? <Toast content={toastMsg} onDismiss={toggleActive} error={isError} /> : null),
+    [active],
+  );
   // Exit if no id
   if (!id)
     return (
@@ -75,26 +78,28 @@ function EditSubscription() {
   const setInitialData = (data: { subscriptionContract: SubscriptionContract }) => {
     if (data.subscriptionContract) {
       const d = data.subscriptionContract;
-      if (d.status) setStatus(d.status);
-      if (d.id) setContractId(d.id);
-      if (d.billingPolicy.interval) setInterval(d.billingPolicy.interval);
-      if (d.billingPolicy.intervalCount) setIntervalCount(String(d.billingPolicy.intervalCount));
-      if (d.nextBillingDate.split('T')[0]) setNextBillingDate(d.nextBillingDate.split('T')[0]);
-      if (d.lines.edges[0].node.productId) setLineItem(d.lines.edges[0].node.productId);
-      if (d.lines.edges[0].node.id) setLineId(d.lines.edges[0].node.id);
-      if (d.lines.edges[0].node.quantity)
-        setLineItemQuantity(String(d.lines.edges[0].node.quantity));
-      if (d.lines.edges) setLineItems(d.lines.edges);
-      if (d.customerPaymentMethod.id) setPaymentMethod(d.customerPaymentMethod.id);
-      if (d.deliveryMethod.address.company) setCompany(d.deliveryMethod.address.company);
-      if (d.deliveryMethod.address.address1) setAddress1(d.deliveryMethod.address.address1);
-      if (d.deliveryMethod.address.address2) setAddress2(d.deliveryMethod.address.address2);
-      if (d.deliveryMethod.address.city) setCity(d.deliveryMethod.address.city);
-      if (d.deliveryMethod.address.country) setCountry(d.deliveryMethod.address.country);
-      if (d.deliveryMethod.address.province) setProvince(d.deliveryMethod.address.province);
-      if (d.deliveryMethod.address.zip) setZip(d.deliveryMethod.address.zip);
-      if (d.deliveryMethod.address.firstName) setFirstName(d.deliveryMethod.address.firstName);
-      if (d.deliveryMethod.address.lastName) setLastName(d.deliveryMethod.address.lastName);
+      unstable_batchedUpdates(() => {
+        if (d.status) setStatus(d.status);
+        if (d.id) setContractId(d.id);
+        if (d.billingPolicy.interval) setInterval(d.billingPolicy.interval);
+        if (d.billingPolicy.intervalCount) setIntervalCount(String(d.billingPolicy.intervalCount));
+        if (d.nextBillingDate.split('T')[0]) setNextBillingDate(d.nextBillingDate.split('T')[0]);
+        if (d.lines.edges[0].node.productId) setLineItem(d.lines.edges[0].node.productId);
+        if (d.lines.edges[0].node.id) setLineId(d.lines.edges[0].node.id);
+        if (d.lines.edges[0].node.quantity)
+          setLineItemQuantity(String(d.lines.edges[0].node.quantity));
+        if (d.lines.edges) setLineItems(d.lines.edges);
+        if (d.customerPaymentMethod.id) setPaymentMethod(d.customerPaymentMethod.id);
+        if (d.deliveryMethod.address.company) setCompany(d.deliveryMethod.address.company);
+        if (d.deliveryMethod.address.address1) setAddress1(d.deliveryMethod.address.address1);
+        if (d.deliveryMethod.address.address2) setAddress2(d.deliveryMethod.address.address2);
+        if (d.deliveryMethod.address.city) setCity(d.deliveryMethod.address.city);
+        if (d.deliveryMethod.address.country) setCountry(d.deliveryMethod.address.country);
+        if (d.deliveryMethod.address.province) setProvince(d.deliveryMethod.address.province);
+        if (d.deliveryMethod.address.zip) setZip(d.deliveryMethod.address.zip);
+        if (d.deliveryMethod.address.firstName) setFirstName(d.deliveryMethod.address.firstName);
+        if (d.deliveryMethod.address.lastName) setLastName(d.deliveryMethod.address.lastName);
+      });
     }
   };
   // Get Data
@@ -105,35 +110,38 @@ function EditSubscription() {
     onCompleted: (data) => setInitialData(data),
   });
 
-  const handleIntervalChange = (value: string) => {
+  const handleIntervalChange = useCallback((value: string) => {
     setInterval(value);
-  };
+  }, []);
 
-  const handleIntervalCountChange = (value: string) => {
+  const handleIntervalCountChange = useCallback((value: string) => {
     setIntervalCount(value);
-  };
+  }, []);
 
-  const handleNextBillingDateChange = (date: string) => {
+  const handleNextBillingDateChange = useCallback((date: string) => {
     setNextBillingDate(date);
-  };
+  }, []);
 
-  const handleLineItemChange = (productId: string) => {
-    lineItems.map((line: Line) => {
-      if (line.node.productId === productId) {
-        setLineItemQuantity(String(line.node.quantity));
-        setLineId(line.node.id);
-      }
-    });
-    setLineItem(productId);
-  };
+  const handleLineItemChange = useCallback(
+    (productId: string) => {
+      lineItems.map((line: Line) => {
+        if (line.node.productId === productId) {
+          setLineItemQuantity(String(line.node.quantity));
+          setLineId(line.node.id);
+        }
+      });
+      setLineItem(productId);
+    },
+    [lineItems],
+  );
 
-  const handleLineItemQuantityChange = (quantity: string) => {
+  const handleLineItemQuantityChange = useCallback((quantity: string) => {
     setLineItemQuantity(quantity);
-  };
+  }, []);
 
-  const handleStatusChange = (status: string) => {
+  const handleStatusChange = useCallback((status: string) => {
     setStatus(status);
-  };
+  }, []);
 
   // Redirects
   const adminRedirect = (href: string) => {
@@ -143,6 +151,19 @@ function EditSubscription() {
   const appRedirect = () => {
     redirect.dispatch(Redirect.Action.APP, '/');
   };
+
+  const productOptions = useMemo(() => {
+    if (!data) return;
+    return data.subscriptionContract.lines.edges.map((line: Line) => {
+      const label = line.node.variantTitle
+        ? `${line.node.title} - ${line.node.variantTitle}`
+        : `${line.node.title}`;
+      return {
+        label: label,
+        value: line.node.productId,
+      };
+    });
+  }, [data]);
 
   if (loading) return <LoadingSubscription />;
   if (error) return <ErrorState err={error.message} />;
@@ -270,15 +291,7 @@ function EditSubscription() {
               <Card sectioned>
                 <Select
                   label="Item"
-                  options={data.subscriptionContract.lines.edges.map((line: Line) => {
-                    const label = line.node.variantTitle
-                      ? `${line.node.title} - ${line.node.variantTitle}`
-                      : `${line.node.title}`;
-                    return {
-                      label: label,
-                      value: line.node.productId,
-                    };
-                  })}
+                  options={productOptions}
                   onChange={(lineItem) => handleLineItemChange(lineItem)}
                   value={lineItem}
                 />
@@ -290,10 +303,15 @@ function EditSubscription() {
                   autoComplete=""
                 />
                 <Stack distribution="trailing">
+                  <TextContainer>
+                    * Removing item will remove all quantities of the selected item, to decrease the
+                    quantity of the selected item, decrease quantity and update instead.
+                  </TextContainer>
                   <UpdateSubscriptionButton
                     contractId={contractId}
                     input={{ quantity: Number(lineItemQuantity) }}
                     lineId={lineId}
+                    lineItems={lineItems}
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
@@ -302,6 +320,7 @@ function EditSubscription() {
                   <RemoveLineFromSubscriptionButton
                     contractId={contractId}
                     lineId={lineId}
+                    lineItems={lineItems}
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}

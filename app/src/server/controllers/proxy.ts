@@ -12,9 +12,12 @@ import {
   // getSubscriptionContract,
   updateSubscriptionContract,
   updateSubscriptionDraft,
+  updateSubscriptionDraftLine,
+  removeSubscriptionDraftLine,
   updatePaymentMethod,
 } from '../handlers/index.js';
 import { loadCurrentShop } from '../prisma-store.js';
+import { stringify } from 'uuid';
 dotenv.config();
 
 interface Request extends Req {
@@ -114,6 +117,96 @@ export const updateCustomerSubscription = async (req: Request, res: Response) =>
           const client = createClient(shop, pgRes.accessToken);
           let draftId = await updateSubscriptionContract(client, subscriptionContractId);
           draftId = await updateSubscriptionDraft(client, draftId, input);
+          const subscriptionId = await commitSubscriptionDraft(client, draftId);
+          // send data
+          res.json({ updatedSubscriptionContractId: subscriptionId });
+        } else {
+          return res.status(401);
+        }
+      }
+    } else {
+      res.status(403).redirect('/accounts');
+    }
+  } catch (err: any) {
+    console.log('ERROR', err.message);
+    return res.status(403);
+  }
+};
+
+const calculateCurrentPrice = (discountRate: number, currentPrice: string) => {
+  const price = parseFloat(currentPrice);
+  const amount = (price - price * discountRate).toFixed(2);
+  return String(amount);
+};
+
+export const updateCustomerSubscriptionLines = async (req: Request, res: Response) => {
+  const params = req.query;
+  const body = req.body as {
+    token: string;
+    customerId: string;
+    shop: string;
+    subscriptionContractId: string;
+    lines: {
+      id: string;
+      quantity: number;
+      basePrice: string;
+    }[];
+  };
+  interface Line {
+    id: string;
+    quantity: number;
+    basePrice: string;
+    currentPrice: string;
+  }
+
+  const { token, customerId, subscriptionContractId, lines } = body;
+  try {
+    const shop = params.shop as string;
+    if (shop && token) {
+      const verified = verifyToken(shop, customerId, token);
+      if (verified) {
+        const pgRes = await loadCurrentShop(shop);
+        if (pgRes) {
+          // get new prices
+          let totalQuantity: number = 0;
+          lines.forEach((line: Line) => (totalQuantity += Number(line.quantity)));
+          // move this to constant later
+          let discountRate: number = 0;
+          if (totalQuantity >= 5) {
+            discountRate = 0.2;
+          } else if (totalQuantity >= 4) {
+            discountRate = 0.15;
+          } else if (totalQuantity >= 3) {
+            discountRate = 0.1;
+          } else {
+            discountRate = 0;
+          }
+
+          const linesWithUpdatedPrices = lines.map((el: Line) => {
+            return {
+              id: el.id,
+              quantity: Number(el.quantity),
+              currentPrice: calculateCurrentPrice(discountRate, el.basePrice),
+              basePrice: el.basePrice,
+            };
+          });
+
+          // create update draft
+          const client = createClient(shop, pgRes.accessToken);
+          let draftId = await updateSubscriptionContract(client, subscriptionContractId);
+          // loop through lines and update lines with new current price
+          const promises = linesWithUpdatedPrices.map(async (line: Line) => {
+            if (line.quantity === 0) {
+              return await removeSubscriptionDraftLine(client, draftId, line.id);
+            } else {
+              return await updateSubscriptionDraftLine(client, draftId, line.id, {
+                currentPrice: line.currentPrice,
+                quantity: line.quantity,
+              });
+            }
+          });
+          const updatedLines = await Promise.all(promises);
+          // commit draft
           const subscriptionId = await commitSubscriptionDraft(client, draftId);
           // send data
           res.json({ updatedSubscriptionContractId: subscriptionId });
