@@ -13,6 +13,7 @@ interface Props {
   contractId: string;
   lineId?: string;
   lineItems?: any[];
+  isSubscriptionBox: boolean;
   toggleActive: () => void;
   setMsg: (msg: string) => void;
   setToastError: (error: boolean) => void;
@@ -29,6 +30,7 @@ const RemoveLineFromSubscriptionButton = ({
   contractId,
   lineId,
   lineItems,
+  isSubscriptionBox,
   toggleActive,
   setMsg,
   setToastError,
@@ -44,14 +46,16 @@ const RemoveLineFromSubscriptionButton = ({
   });
   // move this to constant later
   let discountRate: number = 0;
-  if (totalQuantity >= 5) {
-    discountRate = 0.2;
-  } else if (totalQuantity >= 4) {
-    discountRate = 0.15;
-  } else if (totalQuantity >= 3) {
-    discountRate = 0.1;
-  } else {
-    discountRate = 0;
+  if (isSubscriptionBox) {
+    if (totalQuantity >= 5) {
+      discountRate = 0.2;
+    } else if (totalQuantity >= 4) {
+      discountRate = 0.15;
+    } else if (totalQuantity >= 3) {
+      discountRate = 0.1;
+    } else {
+      discountRate = 0;
+    }
   }
   // get updated pricing per line
   const linesWithUpdatedPrices: any[] = [];

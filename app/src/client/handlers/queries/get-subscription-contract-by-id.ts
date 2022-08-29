@@ -55,6 +55,10 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
                 currencyCode
               }
             }
+            customAttributes {
+              key
+              value
+            }
           }
         }
       }

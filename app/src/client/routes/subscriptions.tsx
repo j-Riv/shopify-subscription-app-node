@@ -165,6 +165,13 @@ function EditSubscription() {
     });
   }, [data]);
 
+  const isSubscriptionBox = useMemo(() => {
+    if (!data) return;
+    return data.subscriptionContract.lines.edges[0].node.customAttributes.find(
+      (attr: { key: string; value: string }) => attr.key === '_subscription_box',
+    );
+  }, [data?.subscriptionContract?.lines]);
+
   if (loading) return <LoadingSubscription />;
   if (error) return <ErrorState err={error.message} />;
 
@@ -312,6 +319,7 @@ function EditSubscription() {
                     input={{ quantity: Number(lineItemQuantity) }}
                     lineId={lineId}
                     lineItems={lineItems}
+                    isSubscriptionBox={isSubscriptionBox}
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
@@ -321,6 +329,7 @@ function EditSubscription() {
                     contractId={contractId}
                     lineId={lineId}
                     lineItems={lineItems}
+                    isSubscriptionBox={isSubscriptionBox}
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}

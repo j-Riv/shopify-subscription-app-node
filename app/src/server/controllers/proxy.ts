@@ -139,6 +139,13 @@ const calculateCurrentPrice = (discountRate: number, currentPrice: string) => {
   return String(amount);
 };
 
+interface Line {
+  id: string;
+  quantity: number;
+  basePrice: string;
+  currentPrice: string;
+}
+
 export const updateCustomerSubscriptionLines = async (req: Request, res: Response) => {
   const params = req.query;
   const body = req.body as {
@@ -146,20 +153,11 @@ export const updateCustomerSubscriptionLines = async (req: Request, res: Respons
     customerId: string;
     shop: string;
     subscriptionContractId: string;
-    lines: {
-      id: string;
-      quantity: number;
-      basePrice: string;
-    }[];
+    lines: Line[];
+    isSubscriptionBox: boolean;
   };
-  interface Line {
-    id: string;
-    quantity: number;
-    basePrice: string;
-    currentPrice: string;
-  }
 
-  const { token, customerId, subscriptionContractId, lines } = body;
+  const { token, customerId, subscriptionContractId, lines, isSubscriptionBox } = body;
   try {
     const shop = params.shop as string;
     if (shop && token) {
@@ -172,14 +170,16 @@ export const updateCustomerSubscriptionLines = async (req: Request, res: Respons
           lines.forEach((line: Line) => (totalQuantity += Number(line.quantity)));
           // move this to constant later
           let discountRate: number = 0;
-          if (totalQuantity >= 5) {
-            discountRate = 0.2;
-          } else if (totalQuantity >= 4) {
-            discountRate = 0.15;
-          } else if (totalQuantity >= 3) {
-            discountRate = 0.1;
-          } else {
-            discountRate = 0;
+          if (isSubscriptionBox) {
+            if (totalQuantity >= 5) {
+              discountRate = 0.2;
+            } else if (totalQuantity >= 4) {
+              discountRate = 0.15;
+            } else if (totalQuantity >= 3) {
+              discountRate = 0.1;
+            } else {
+              discountRate = 0;
+            }
           }
 
           const linesWithUpdatedPrices = lines.map((el: Line) => {

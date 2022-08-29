@@ -23,7 +23,7 @@ export function SUBSCRIPTION_CONTRACT_GET() {
           amount
         }
         # lineCount
-        lines(first: 10) {
+        lines(first: 20) {
           edges {
             node {
               id
@@ -48,6 +48,10 @@ export function SUBSCRIPTION_CONTRACT_GET() {
                   amount
                   currencyCode
                 }
+              }
+              customAttributes {
+                key
+                value
               }
             }
           }
