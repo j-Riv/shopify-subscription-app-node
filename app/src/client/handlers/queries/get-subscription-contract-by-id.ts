@@ -22,7 +22,7 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
         amount
       }
       lineCount
-      lines(first: 10) {
+      lines(first: 20) {
         edges {
           node {
             id
@@ -34,6 +34,11 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
             variantImage {
               originalSrc
               altText
+            }
+            pricingPolicy {
+              basePrice {
+                amount
+              }
             }
             currentPrice {
               amount
@@ -49,6 +54,10 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
                 amount
                 currencyCode
               }
+            }
+            customAttributes {
+              key
+              value
             }
           }
         }

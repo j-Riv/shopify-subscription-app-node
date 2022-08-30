@@ -11,6 +11,8 @@ import { deleteSellingPlanGroup } from './mutations/delete-selling-plan-group.js
 import { createSubscriptionBillingAttempt } from './mutations/create-billing-attempt.js';
 import { updateSubscriptionContract } from './mutations/update-subscription-contract.js';
 import { updateSubscriptionDraft } from './mutations/update-subscription-draft.js';
+import { updateSubscriptionDraftLine } from './mutations/update-subscription-draft-line.js';
+import { removeSubscriptionDraftLine } from './mutations/remove-subscription-draft-line.js';
 import { commitSubscriptionDraft } from './mutations/commit-subscription-draft.js';
 import { updatePaymentMethod } from './mutations/update-payment-method.js';
 import { getSellingPlans } from './queries/get-all-selling-plans.js';
@@ -36,6 +38,8 @@ export {
   createSubscriptionBillingAttempt,
   updateSubscriptionContract,
   updateSubscriptionDraft,
+  updateSubscriptionDraftLine,
+  removeSubscriptionDraftLine,
   commitSubscriptionDraft,
   updatePaymentMethod,
   getSellingPlans,
