@@ -8,6 +8,7 @@ import {
   UPDATE_SUBSCRIPTION_DRAFT_LINE,
   COMMIT_SUBSCRIPTION_DRAFT,
 } from '../handlers';
+import { calculateCurrentPrice, calculateDiscountRate } from '../utils/subscription-box';
 
 interface Props {
   contractId: string;
@@ -20,13 +21,6 @@ interface Props {
   setToastError: (error: boolean) => void;
   refetch: () => void;
 }
-
-const calculateCurrentPrice = (discountRate: number, currentPrice: string) => {
-  const price = parseFloat(currentPrice);
-  const amount = (price - price * discountRate).toFixed(2);
-  console.log('CURRENT PRICE', amount);
-  return String(amount);
-};
 
 const UpdateSubscriptionButton = ({
   contractId,
@@ -48,7 +42,6 @@ const UpdateSubscriptionButton = ({
         // if line items prop, recalculate total discount
         // get new prices
         let totalQuantity: number = 0;
-        console.log('LINE ITEMS', lineItems);
         lineItems.forEach((line: any) => {
           if (line.node.id === lineId) {
             totalQuantity += input.quantity;
@@ -57,18 +50,7 @@ const UpdateSubscriptionButton = ({
           }
         });
 
-        let discountRate: number = 0;
-        if (isSubscriptionBox) {
-          if (totalQuantity >= 5) {
-            discountRate = 0.2;
-          } else if (totalQuantity >= 4) {
-            discountRate = 0.15;
-          } else if (totalQuantity >= 3) {
-            discountRate = 0.1;
-          } else {
-            discountRate = 0;
-          }
-        }
+        const discountRate = calculateDiscountRate(totalQuantity, isSubscriptionBox);
         // get updated pricing per line
         const linesWithUpdatedPrices = lineItems.map((line: any) => {
           let quantity = line.node.id === lineId ? input.quantity : line.node.quantity;
