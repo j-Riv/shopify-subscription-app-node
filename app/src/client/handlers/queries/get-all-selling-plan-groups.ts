@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_ALL_SELLING_PLAN_GROUPS = gql`
   query {
-    sellingPlanGroups(first: 20) {
+    sellingPlanGroups(first: 25) {
       edges {
         node {
           id
@@ -11,7 +11,7 @@ export const GET_ALL_SELLING_PLAN_GROUPS = gql`
           options
           name
           summary
-          sellingPlans(first: 5) {
+          sellingPlans(first: 25) {
             edges {
               node {
                 id

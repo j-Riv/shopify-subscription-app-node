@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Badge,
@@ -10,12 +10,9 @@ import {
   Stack,
   TextField,
   TextStyle,
-  Toast,
 } from '@shopify/polaris';
 import { TitleBar, useAppBridge } from '@shopify/app-bridge-react';
-import { useQuery } from '@apollo/client';
 import { Redirect } from '@shopify/app-bridge/actions';
-import { GET_SUBSCRIPTION_BY_ID } from '../handlers';
 import { formatId } from '../utils/formatters';
 import LoadingSubscription from '../components/LoadingSubscription';
 import ErrorState from '../components/ErrorState';
@@ -23,8 +20,10 @@ import CustomerInformation from '../components/CustomerInformation';
 import SubscriptionInformation from '../components/SubscriptionInformation';
 import UpdateSubscriptionButton from '../components/UpdateSubscriptionButton';
 import RemoveLineFromSubscriptionButton from '../components/RemoveLineFromSubscriptionButton';
+import AddLineToSubscriptionButton from '../components/AddLineToSubscriptionButton';
 import UpdatePaymentMethodButton from '../components/UpdatePaymentMethodButton';
-import { SubscriptionContract, Line } from '../types/subscriptions';
+import { Line } from '../types/subscriptions';
+import { useSubscription, useToast } from '../hooks';
 
 function EditSubscription() {
   // Get id from path
@@ -33,37 +32,55 @@ function EditSubscription() {
   // Create redirects
   const app = useAppBridge();
   const redirect = Redirect.create(app);
-  // State
-  const [status, setStatus] = useState<string>('');
-  const [contractId, setContractId] = useState<string>('');
-  const [interval, setInterval] = useState<string>('');
-  const [intervalCount, setIntervalCount] = useState<string>('');
-  const [nextBillingDate, setNextBillingDate] = useState<string>('');
-  const [lineItems, setLineItems] = useState<Line[]>([]);
-  const [lineItem, setLineItem] = useState<string>('');
-  const [lineId, setLineId] = useState<string>('');
-  const [lineItemQuantity, setLineItemQuantity] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
-  const [company, setCompany] = useState<string>('');
-  const [firstName, setFirstName] = useState<string>();
-  const [lastName, setLastName] = useState<string>('');
-  const [address1, setAddress1] = useState<string>('');
-  const [address2, setAddress2] = useState<string>('');
-  const [city, setCity] = useState<string>('');
-  const [country, setCountry] = useState<string>('');
-  const [province, setProvince] = useState<string>('');
-  const [zip, setZip] = useState<string>('');
 
-  const [active, setActive] = useState<boolean>(false);
-  const [toastMsg, setToastMsg] = useState<string>('');
-  const [isError, setIsError] = useState<boolean>(false);
-  const toggleActive = useCallback(() => setActive((active) => !active), []);
-  const setMsg = useCallback((msg) => setToastMsg(msg), []);
-  const setToastError = useCallback((error) => setIsError(error), []);
-  // Toast
-  const toastMarkup = active ? (
-    <Toast content={toastMsg} onDismiss={toggleActive} error={isError} />
-  ) : null;
+  const {
+    // data
+    loading,
+    error,
+    data,
+    refetch,
+    sellingPlanData,
+    // state
+    status,
+    contractId,
+    interval,
+    intervalCount,
+    nextBillingDate,
+    lineItem,
+    lineId,
+    lineItemQuantity,
+    paymentMethod,
+    company,
+    firstName,
+    lastName,
+    address1,
+    address2,
+    city,
+    country,
+    province,
+    zip,
+    itemToAdd,
+    // handlers
+    handleCompanyChange,
+    handleFirstNameChange,
+    handleLastNameChange,
+    handleAddress1Change,
+    handleAddress2Change,
+    handleCityChange,
+    handleProvinceChange,
+    handleCountryChange,
+    handleZipChange,
+    handleIntervalChange,
+    handleIntervalCountChange,
+    handleNextBillingDateChange,
+    handleLineItemChange,
+    handleLineItemQuantityChange,
+    handleStatusChange,
+    handleItemToAddChange,
+  } = useSubscription(id);
+
+  const { toggleActive, setMsg, setToastError, toastMarkup } = useToast();
+
   // Exit if no id
   if (!id)
     return (
@@ -71,69 +88,6 @@ function EditSubscription() {
         <TextStyle variation="negative">Error! No Subscription Contract ID Supplied.</TextStyle>
       </div>
     );
-  // Set Data
-  const setInitialData = (data: { subscriptionContract: SubscriptionContract }) => {
-    if (data.subscriptionContract) {
-      const d = data.subscriptionContract;
-      if (d.status) setStatus(d.status);
-      if (d.id) setContractId(d.id);
-      if (d.billingPolicy.interval) setInterval(d.billingPolicy.interval);
-      if (d.billingPolicy.intervalCount) setIntervalCount(String(d.billingPolicy.intervalCount));
-      if (d.nextBillingDate.split('T')[0]) setNextBillingDate(d.nextBillingDate.split('T')[0]);
-      if (d.lines.edges[0].node.productId) setLineItem(d.lines.edges[0].node.productId);
-      if (d.lines.edges[0].node.id) setLineId(d.lines.edges[0].node.id);
-      if (d.lines.edges[0].node.quantity)
-        setLineItemQuantity(String(d.lines.edges[0].node.quantity));
-      if (d.lines.edges) setLineItems(d.lines.edges);
-      if (d.customerPaymentMethod.id) setPaymentMethod(d.customerPaymentMethod.id);
-      if (d.deliveryMethod.address.company) setCompany(d.deliveryMethod.address.company);
-      if (d.deliveryMethod.address.address1) setAddress1(d.deliveryMethod.address.address1);
-      if (d.deliveryMethod.address.address2) setAddress2(d.deliveryMethod.address.address2);
-      if (d.deliveryMethod.address.city) setCity(d.deliveryMethod.address.city);
-      if (d.deliveryMethod.address.country) setCountry(d.deliveryMethod.address.country);
-      if (d.deliveryMethod.address.province) setProvince(d.deliveryMethod.address.province);
-      if (d.deliveryMethod.address.zip) setZip(d.deliveryMethod.address.zip);
-      if (d.deliveryMethod.address.firstName) setFirstName(d.deliveryMethod.address.firstName);
-      if (d.deliveryMethod.address.lastName) setLastName(d.deliveryMethod.address.lastName);
-    }
-  };
-  // Get Data
-  const { loading, error, data, refetch } = useQuery(GET_SUBSCRIPTION_BY_ID, {
-    variables: {
-      id: `gid://shopify/SubscriptionContract/${id}`,
-    },
-    onCompleted: (data) => setInitialData(data),
-  });
-
-  const handleIntervalChange = (value: string) => {
-    setInterval(value);
-  };
-
-  const handleIntervalCountChange = (value: string) => {
-    setIntervalCount(value);
-  };
-
-  const handleNextBillingDateChange = (date: string) => {
-    setNextBillingDate(date);
-  };
-
-  const handleLineItemChange = (productId: string) => {
-    lineItems.map((line: Line) => {
-      if (line.node.productId === productId) {
-        setLineItemQuantity(String(line.node.quantity));
-        setLineId(line.node.id);
-      }
-    });
-    setLineItem(productId);
-  };
-
-  const handleLineItemQuantityChange = (quantity: string) => {
-    setLineItemQuantity(quantity);
-  };
-
-  const handleStatusChange = (status: string) => {
-    setStatus(status);
-  };
 
   // Redirects
   const adminRedirect = (href: string) => {
@@ -146,6 +100,8 @@ function EditSubscription() {
 
   if (loading) return <LoadingSubscription />;
   if (error) return <ErrorState err={error.message} />;
+
+  console.log('sellingplandata', sellingPlanData?.sellingPlanGroup);
 
   if (data.subscriptionContract) {
     return (
@@ -210,7 +166,7 @@ function EditSubscription() {
                 />
                 <TextField
                   value={intervalCount}
-                  onChange={(count) => handleIntervalCountChange(count)}
+                  onChange={(value) => handleIntervalCountChange(value)}
                   label="Interval Count"
                   type="number"
                   autoComplete=""
@@ -245,7 +201,7 @@ function EditSubscription() {
               <Card sectioned>
                 <TextField
                   value={nextBillingDate}
-                  onChange={(nextBillingDate) => handleNextBillingDateChange(nextBillingDate)}
+                  onChange={(value) => handleNextBillingDateChange(value)}
                   label="Next Billing Date"
                   type="date"
                   autoComplete=""
@@ -279,12 +235,12 @@ function EditSubscription() {
                       value: line.node.productId,
                     };
                   })}
-                  onChange={(lineItem) => handleLineItemChange(lineItem)}
+                  onChange={handleLineItemChange}
                   value={lineItem}
                 />
                 <TextField
                   value={lineItemQuantity}
-                  onChange={(lineItemQuantity) => handleLineItemQuantityChange(lineItemQuantity)}
+                  onChange={handleLineItemQuantityChange}
                   label="Quantity"
                   type="number"
                   autoComplete=""
@@ -308,6 +264,60 @@ function EditSubscription() {
                     refetch={refetch}
                   />
                 </Stack>
+              </Card>
+            </Layout.AnnotatedSection>
+            <Layout.AnnotatedSection title="Add Product" description="Select Product to Add">
+              <Card sectioned>
+                {sellingPlanData?.sellingPlanGroup?.productVariants && (
+                  <>
+                    <Select
+                      label="Item to Add"
+                      options={sellingPlanData.sellingPlanGroup.productVariants.edges
+                        .filter((el: any) => el.node.sellableOnlineQuantity >= 1)
+                        .map((el: any) => {
+                          console.log('NODE', el.node);
+                          return {
+                            label: `${el.node.sku} - ${el.node.product.title} - ${el.node.title}`,
+                            value: el.node.id,
+                          };
+                        })}
+                      onChange={handleItemToAddChange}
+                      value={itemToAdd}
+                    />
+                    <Stack distribution="trailing">
+                      <AddLineToSubscriptionButton
+                        contractId={contractId}
+                        input={{
+                          customAttributes:
+                            data.subscriptionContract.lines.edges[0].customAttributes,
+                          sellingPlanId: data.subscriptionContract.lines.edges[0].sellingPlanId,
+                          sellingPlanGroup:
+                            data.subscriptionContract.lines.edges[0].sellingPlanName,
+                          quantity: 1,
+                          productVariantId: itemToAdd,
+                          // currentPrice: '',
+                          // pricingPolicy: {
+                          //   basePrice: '11.99',
+                          //   cycleDiscounts: {
+                          //     adjustmentType: 'PERCENTAGE',
+                          //     adjustmentValue: {
+                          //       percentage: 10,
+                          //     },
+                          //     afterCycle: 0,
+                          //     computedPrice: '10.79',
+                          //   },
+                          // },
+                        }}
+                        itemToAdd={itemToAdd}
+                        productVariants={sellingPlanData.sellingPlanGroup.productVariants.edges}
+                        toggleActive={toggleActive}
+                        setMsg={setMsg}
+                        setToastError={setToastError}
+                        refetch={refetch}
+                      />
+                    </Stack>
+                  </>
+                )}
               </Card>
             </Layout.AnnotatedSection>
             <Layout.AnnotatedSection
@@ -338,7 +348,7 @@ function EditSubscription() {
                   label="Company"
                   type="text"
                   placeholder="Company"
-                  onChange={(company) => setCompany(company)}
+                  onChange={handleCompanyChange}
                   value={company}
                   autoComplete=""
                 />
@@ -346,7 +356,7 @@ function EditSubscription() {
                   label="First Name"
                   type="text"
                   placeholder="First Name"
-                  onChange={(firstName) => setFirstName(firstName)}
+                  onChange={handleFirstNameChange}
                   value={firstName}
                   autoComplete=""
                 />
@@ -354,7 +364,7 @@ function EditSubscription() {
                   label="Last Name"
                   type="text"
                   placeholder="Last Name"
-                  onChange={(lastName) => setLastName(lastName)}
+                  onChange={handleLastNameChange}
                   value={lastName}
                   autoComplete=""
                 />
@@ -362,7 +372,7 @@ function EditSubscription() {
                   label="Address 1"
                   type="text"
                   placeholder="Address1"
-                  onChange={(address1) => setAddress1(address1)}
+                  onChange={handleAddress1Change}
                   value={address1}
                   autoComplete=""
                 />
@@ -370,7 +380,7 @@ function EditSubscription() {
                   label="Address 2"
                   type="text"
                   placeholder="Address2"
-                  onChange={(address2) => setAddress2(address2)}
+                  onChange={handleAddress2Change}
                   value={address2}
                   autoComplete=""
                 />
@@ -378,7 +388,7 @@ function EditSubscription() {
                   label="City"
                   type="text"
                   placeholder="City"
-                  onChange={(city) => setCity(city)}
+                  onChange={handleCityChange}
                   value={city}
                   autoComplete=""
                 />
@@ -386,7 +396,7 @@ function EditSubscription() {
                   label="Province"
                   type="text"
                   placeholder="Province"
-                  onChange={(province) => setProvince(province)}
+                  onChange={handleProvinceChange}
                   value={province}
                   autoComplete=""
                 />
@@ -394,7 +404,7 @@ function EditSubscription() {
                   label="Country"
                   type="text"
                   placeholder="Country"
-                  onChange={(country) => setCountry(country)}
+                  onChange={handleCountryChange}
                   value={country}
                   autoComplete=""
                 />
@@ -402,7 +412,7 @@ function EditSubscription() {
                   label="Zip"
                   type="text"
                   placeholder="Zip"
-                  onChange={(zip) => setZip(zip)}
+                  onChange={handleZipChange}
                   value={zip}
                   autoComplete=""
                 />

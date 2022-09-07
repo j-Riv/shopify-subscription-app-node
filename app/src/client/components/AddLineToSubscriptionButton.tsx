@@ -4,53 +4,71 @@ import { Button } from '@shopify/polaris';
 import { useMutation } from '@apollo/client';
 import {
   UPDATE_SUBSCRIPTION_CONTRACT,
-  REMOVE_SUBSCRIPTION_DRAFT_LINE,
+  ADD_SUBSCRIPTION_DRAFT_LINE,
   COMMIT_SUBSCRIPTION_DRAFT,
 } from '../handlers';
 
 interface Props {
   contractId: string;
-  lineId?: string;
+  input: any;
   toggleActive: () => void;
   setMsg: (msg: string) => void;
   setToastError: (error: boolean) => void;
   refetch: () => void;
+  itemToAdd: string;
+  productVariants: any[];
 }
 
-const RemoveLineFromSubscriptionButton = ({
+const AddLineToSubscriptionButton = ({
   contractId,
-  lineId,
+  input,
   toggleActive,
   setMsg,
   setToastError,
   refetch,
+  itemToAdd,
+  productVariants,
 }: Props) => {
   const [loading, setLoading] = useState<boolean>(false);
+
   // Update subscription contract -> draft id
   const [updateSubscriptionContract] = useMutation(UPDATE_SUBSCRIPTION_CONTRACT, {
     onCompleted: (data) => {
-      if (lineId) {
-        removeDraftLine(data.subscriptionContractUpdate.draft.id, lineId);
-      }
+      // add new line here
+      const productVariant = productVariants.find((el: any) => el.node.id === itemToAdd);
+
+      input.currentPrice = productVariant.price;
+      input.pricingPolicy = {
+        basePrice: productVariant.price,
+        cycleDiscounts: {
+          adjustmentType: 'PERCENTAGE',
+          adjustmentValue: {
+            percentage: 10,
+          },
+          afterCycle: 0,
+          computedPrice: productVariant.price,
+        },
+      };
+      addDraftLine(data.subscriptionContractUpdate.draft.id, input);
     },
   });
-  // Remove subscription draft line -> draft id
-  const [removeSubscriptionDraftLine] = useMutation(REMOVE_SUBSCRIPTION_DRAFT_LINE, {
+  // Update subscription draft line -> draft id
+  const [addSubscriptionDraftLine] = useMutation(ADD_SUBSCRIPTION_DRAFT_LINE, {
     onCompleted: (data) => {
       try {
-        if (data.subscriptionDraftLineRemove.userErrors.length > 0) {
+        if (data.subscriptionDraftLineAdd.userErrors.length > 0) {
           setLoading(false);
           setToastError(true);
-          setMsg(data.subscriptionDraftLineRemove.userErrors[0].message);
+          setMsg(data.subscriptionDraftLineAdd.userErrors[0].message);
           toggleActive();
         } else {
           setToastError(false);
-          commitDraft(data.subscriptionDraftLineRemove.draft.id);
+          commitDraft(data.subscriptionDraftLineAdd.draft.id);
         }
       } catch (e) {
         console.log('Error', e.message);
         setToastError(true);
-        setMsg('Error Removing Line Item From Subscription');
+        setMsg('Error Adding Line Item To Subscription');
         toggleActive();
       }
     },
@@ -72,16 +90,16 @@ const RemoveLineFromSubscriptionButton = ({
     },
   });
 
-  const removeDraftLine = (draftId: string, lineId: string) => {
+  const addDraftLine = (draftId: string, lineId: string) => {
     try {
-      removeSubscriptionDraftLine({
+      addSubscriptionDraftLine({
         variables: {
           draftId: draftId,
           lineId: lineId,
         },
       });
     } catch (e) {
-      console.log('Remove Draft Line Error', e.message);
+      console.log('Add Draft Line Error', e.message);
     }
   };
 
@@ -98,24 +116,25 @@ const RemoveLineFromSubscriptionButton = ({
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleClick = (_lineId: string) => {
-    try {
-      setLoading(true);
-      updateSubscriptionContract({
-        variables: {
-          contractId: contractId,
-        },
-      });
-    } catch (e) {
-      console.log('Update Contract Error', e.message);
-    }
+  const handleClick = () => {
+    console.log('CLICKED ADD');
+    // try {
+    //   setLoading(true);
+    //   updateSubscriptionContract({
+    //     variables: {
+    //       contractId: contractId,
+    //     },
+    //   });
+    // } catch (e) {
+    //   console.log('Update Contract Error', e.message);
+    // }
   };
 
   return (
-    <Button primary loading={loading} onClick={() => handleClick(lineId)}>
-      Remove
+    <Button primary loading={loading} onClick={handleClick}>
+      Add
     </Button>
   );
 };
 
-export default RemoveLineFromSubscriptionButton;
+export default AddLineToSubscriptionButton;
