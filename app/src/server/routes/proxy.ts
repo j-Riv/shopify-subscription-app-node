@@ -5,6 +5,7 @@ import { Request, Response, NextFunction, Express } from 'express';
 import {
   // applicationProxy,
   updateCustomerSubscription,
+  updateCustomerSubscriptionLines,
   updateSubscriptionPaymentMethod,
   generateCustomerAuth,
   getCustomerSubscriptions,
@@ -39,6 +40,12 @@ const validateSignature = (req: Request, res: Response, next: NextFunction) => {
 // App Proxy routes
 const proxyRoutes = async (app: Express) => {
   app.post('/app_proxy/subscription/edit', validateSignature, updateCustomerSubscription);
+
+  app.post(
+    '/app_proxy/subscription/lines/update',
+    validateSignature,
+    updateCustomerSubscriptionLines,
+  );
 
   app.post('/app_proxy/subscription/payment', validateSignature, updateSubscriptionPaymentMethod);
 

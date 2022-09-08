@@ -42,7 +42,12 @@ export function useSubscription(id: string) {
     GET_SELLING_PLAN_GROUP_WITH_VARIANTS,
   );
   // Get Data
-  const { loading, error, data, refetch } = useQuery(GET_SUBSCRIPTION_BY_ID, {
+  const {
+    loading: subscriptionLoading,
+    error: subscriptionError,
+    data: subscriptionData,
+    refetch: subscriptionRefetch,
+  } = useQuery(GET_SUBSCRIPTION_BY_ID, {
     variables: {
       id: `gid://shopify/SubscriptionContract/${id}`,
     },
@@ -56,7 +61,7 @@ export function useSubscription(id: string) {
           if (d.billingPolicy.intervalCount)
             setIntervalCount(String(d.billingPolicy.intervalCount));
           if (d.nextBillingDate.split('T')[0]) setNextBillingDate(d.nextBillingDate.split('T')[0]);
-          if (d.lines.edges[0].node.productId) setLineItem(d.lines.edges[0].node.productId);
+          if (d.lines.edges[0].node.variantId) setLineItem(d.lines.edges[0].node.variantId);
           if (d.lines.edges[0].node.id) setLineId(d.lines.edges[0].node.id);
           if (d.lines.edges[0].node.quantity)
             setLineItemQuantity(String(d.lines.edges[0].node.quantity));
@@ -72,18 +77,28 @@ export function useSubscription(id: string) {
           if (d.deliveryMethod.address.firstName) setFirstName(d.deliveryMethod.address.firstName);
           if (d.deliveryMethod.address.lastName) setLastName(d.deliveryMethod.address.lastName);
         });
+
+        const sellingPlanId = data.subscriptionContract.lines.edges[0].node.sellingPlanId;
+        const sellingPlanGroup = getSellingPlanGroupId(sellingPlanId, data.sellingPlanGroups.edges);
+        getSellingPlan({
+          variables: {
+            id: sellingPlanGroup.node.id,
+          },
+          onCompleted: (data) => {
+            // set first available variant
+            const excludeItems = d.lines.edges.map((el: any) => el.node.variantId);
+            const filteredItems = data.sellingPlanGroup.productVariants.edges.filter(
+              (el: any) =>
+                el.node.sellableOnlineQuantity >= 1 && !excludeItems.includes(el.node.id),
+            );
+            // set first available if there's a variant to set
+            if (filteredItems.length > 0) {
+              const firstVariant = filteredItems[0].node.id;
+              setItemToAdd(firstVariant);
+            }
+          },
+        });
       }
-      console.log('DATA', data);
-      const sellingPlanId = data.subscriptionContract.lines.edges[0].node.sellingPlanId;
-      console.log('SELLING PLAN ID', sellingPlanId);
-      const sellingPlanGroup = getSellingPlanGroupId(sellingPlanId, data.sellingPlanGroups.edges);
-      console.log('SELLING PLAN GROUP ID', sellingPlanGroup.node.id);
-      getSellingPlan({
-        variables: {
-          id: sellingPlanGroup.node.id,
-        },
-        onCompleted: (data) => console.log('SELLING PLAN DATA', data),
-      });
     },
   });
 
@@ -94,14 +109,14 @@ export function useSubscription(id: string) {
 
   const handleNextBillingDateChange = (date: string) => setNextBillingDate(date);
 
-  const handleLineItemChange = (productId: string) => {
-    lineItems.map((line: Line) => {
-      if (line.node.productId === productId) {
+  const handleLineItemChange = (variantId: string) => {
+    lineItems.forEach((line: Line) => {
+      if (line.node.variantId === variantId) {
         setLineItemQuantity(String(line.node.quantity));
         setLineId(line.node.id);
       }
     });
-    setLineItem(productId);
+    setLineItem(variantId);
   };
 
   const handleLineItemQuantityChange = (value: string) => setLineItemQuantity(value);
@@ -130,10 +145,10 @@ export function useSubscription(id: string) {
 
   return {
     // data
-    loading,
-    error,
-    data,
-    refetch,
+    subscriptionLoading,
+    subscriptionError,
+    subscriptionData,
+    subscriptionRefetch,
     sellingPlanData,
     // state
     status,
@@ -144,6 +159,7 @@ export function useSubscription(id: string) {
     lineItem,
     lineId,
     lineItemQuantity,
+    lineItems,
     paymentMethod,
     company,
     firstName,

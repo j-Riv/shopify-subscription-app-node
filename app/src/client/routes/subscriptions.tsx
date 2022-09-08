@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Badge,
@@ -8,6 +8,7 @@ import {
   Page,
   Select,
   Stack,
+  TextContainer,
   TextField,
   TextStyle,
 } from '@shopify/polaris';
@@ -35,10 +36,10 @@ function EditSubscription() {
 
   const {
     // data
-    loading,
-    error,
-    data,
-    refetch,
+    subscriptionLoading,
+    subscriptionError,
+    subscriptionData,
+    subscriptionRefetch,
     sellingPlanData,
     // state
     status,
@@ -49,6 +50,7 @@ function EditSubscription() {
     lineItem,
     lineId,
     lineItemQuantity,
+    lineItems,
     paymentMethod,
     company,
     firstName,
@@ -98,20 +100,58 @@ function EditSubscription() {
     redirect.dispatch(Redirect.Action.APP, '/');
   };
 
-  if (loading) return <LoadingSubscription />;
-  if (error) return <ErrorState err={error.message} />;
+  const itemOptions = useMemo(() => {
+    if (!subscriptionData) return;
+    return subscriptionData.subscriptionContract.lines.edges.map((line: Line) => {
+      const label = line.node.variantTitle
+        ? `${line.node.title} - ${line.node.variantTitle}`
+        : `${line.node.title}`;
+      return {
+        label: label,
+        value: line.node.variantId,
+      };
+    });
+  }, [subscriptionData]);
 
-  console.log('sellingplandata', sellingPlanData?.sellingPlanGroup);
+  const itemToAddOptions = useMemo(() => {
+    if (!sellingPlanData) return;
+    // exclude items already in subscription
+    const excludeItems = lineItems.map((el: any) => el.node.variantId);
+    return sellingPlanData.sellingPlanGroup.productVariants.edges
+      .filter(
+        (el: any) => el.node.sellableOnlineQuantity >= 1 && !excludeItems.includes(el.node.id),
+      )
+      .map((el: any) => {
+        return {
+          label: `${el.node.sku} - ${el.node.product.title} - ${el.node.title}`,
+          value: el.node.id,
+        };
+      });
+  }, [sellingPlanData, lineItems]);
 
-  if (data.subscriptionContract) {
+  const isSubscriptionBox = useMemo(() => {
+    if (!subscriptionData) return;
+    return subscriptionData.subscriptionContract.lines.edges[0].node.customAttributes.find(
+      (attr: { key: string; value: string }) => attr.key === '_subscription_box',
+    );
+  }, [subscriptionData?.subscriptionContract?.lines]);
+
+  if (subscriptionLoading) return <LoadingSubscription />;
+  if (subscriptionError) return <ErrorState err={subscriptionError.message} />;
+
+  if (subscriptionData.subscriptionContract) {
     return (
       <Page
         breadcrumbs={[{ content: 'Dashboard', onAction: appRedirect }]}
         title="Edit Subscription"
-        subtitle={`Subscription (${formatId(data.subscriptionContract.id)}) `}
+        subtitle={`Subscription (${formatId(subscriptionData.subscriptionContract.id)}) `}
         titleMetadata={
-          <Badge status={data.subscriptionContract.status === 'ACTIVE' ? 'success' : 'warning'}>
-            {data.subscriptionContract.status}
+          <Badge
+            status={
+              subscriptionData.subscriptionContract.status === 'ACTIVE' ? 'success' : 'warning'
+            }
+          >
+            {subscriptionData.subscriptionContract.status}
           </Badge>
         }
       >
@@ -119,10 +159,10 @@ function EditSubscription() {
           <TitleBar title="Edit Subscription" />
           <Layout>
             <Layout.Section>
-              <CustomerInformation data={data} />
+              <CustomerInformation data={subscriptionData} />
             </Layout.Section>
             <Layout.Section>
-              <SubscriptionInformation data={data} adminRedirect={adminRedirect} />
+              <SubscriptionInformation data={subscriptionData} adminRedirect={adminRedirect} />
             </Layout.Section>
             <Layout.AnnotatedSection title="Status" description="Update Status">
               <Card sectioned>
@@ -133,7 +173,7 @@ function EditSubscription() {
                     { label: 'Cancel', value: 'CANCELLED' },
                     { label: 'Pause', value: 'PAUSED' },
                   ]}
-                  onChange={(status) => handleStatusChange(status)}
+                  onChange={handleStatusChange}
                   value={status}
                 />
                 <Stack distribution="trailing">
@@ -144,7 +184,7 @@ function EditSubscription() {
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                 </Stack>
               </Card>
@@ -161,12 +201,12 @@ function EditSubscription() {
                     { label: 'Weekly', value: 'WEEK' },
                     { label: 'Monthly', value: 'MONTH' },
                   ]}
-                  onChange={(value) => handleIntervalChange(value)}
+                  onChange={handleIntervalChange}
                   value={interval}
                 />
                 <TextField
                   value={intervalCount}
-                  onChange={(value) => handleIntervalCountChange(value)}
+                  onChange={handleIntervalCountChange}
                   label="Interval Count"
                   type="number"
                   autoComplete=""
@@ -188,7 +228,7 @@ function EditSubscription() {
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                 </Stack>
               </Card>
@@ -201,7 +241,7 @@ function EditSubscription() {
               <Card sectioned>
                 <TextField
                   value={nextBillingDate}
-                  onChange={(value) => handleNextBillingDateChange(value)}
+                  onChange={handleNextBillingDateChange}
                   label="Next Billing Date"
                   type="date"
                   autoComplete=""
@@ -214,7 +254,7 @@ function EditSubscription() {
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                 </Stack>
               </Card>
@@ -226,15 +266,7 @@ function EditSubscription() {
               <Card sectioned>
                 <Select
                   label="Item"
-                  options={data.subscriptionContract.lines.edges.map((line: Line) => {
-                    const label = line.node.variantTitle
-                      ? `${line.node.title} - ${line.node.variantTitle}`
-                      : `${line.node.title}`;
-                    return {
-                      label: label,
-                      value: line.node.productId,
-                    };
-                  })}
+                  options={itemOptions}
                   onChange={handleLineItemChange}
                   value={lineItem}
                 />
@@ -246,22 +278,30 @@ function EditSubscription() {
                   autoComplete=""
                 />
                 <Stack distribution="trailing">
+                  <TextContainer>
+                    * Removing item will remove all quantities of the selected item, to decrease the
+                    quantity of the selected item, decrease quantity and update instead.
+                  </TextContainer>
                   <UpdateSubscriptionButton
                     contractId={contractId}
                     input={{ quantity: Number(lineItemQuantity) }}
                     lineId={lineId}
+                    lineItems={lineItems}
+                    isSubscriptionBox={isSubscriptionBox}
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                   <RemoveLineFromSubscriptionButton
                     contractId={contractId}
                     lineId={lineId}
+                    lineItems={lineItems}
+                    isSubscriptionBox={isSubscriptionBox}
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                 </Stack>
               </Card>
@@ -272,15 +312,7 @@ function EditSubscription() {
                   <>
                     <Select
                       label="Item to Add"
-                      options={sellingPlanData.sellingPlanGroup.productVariants.edges
-                        .filter((el: any) => el.node.sellableOnlineQuantity >= 1)
-                        .map((el: any) => {
-                          console.log('NODE', el.node);
-                          return {
-                            label: `${el.node.sku} - ${el.node.product.title} - ${el.node.title}`,
-                            value: el.node.id,
-                          };
-                        })}
+                      options={itemToAddOptions}
                       onChange={handleItemToAddChange}
                       value={itemToAdd}
                     />
@@ -289,31 +321,24 @@ function EditSubscription() {
                         contractId={contractId}
                         input={{
                           customAttributes:
-                            data.subscriptionContract.lines.edges[0].customAttributes,
-                          sellingPlanId: data.subscriptionContract.lines.edges[0].sellingPlanId,
-                          sellingPlanGroup:
-                            data.subscriptionContract.lines.edges[0].sellingPlanName,
+                            subscriptionData.subscriptionContract.lines.edges[0].node
+                              .customAttributes,
+                          sellingPlanId:
+                            subscriptionData.subscriptionContract.lines.edges[0].node.sellingPlanId,
+                          sellingPlanName:
+                            subscriptionData.subscriptionContract.lines.edges[0].node
+                              .sellingPlanName,
                           quantity: 1,
                           productVariantId: itemToAdd,
-                          // currentPrice: '',
-                          // pricingPolicy: {
-                          //   basePrice: '11.99',
-                          //   cycleDiscounts: {
-                          //     adjustmentType: 'PERCENTAGE',
-                          //     adjustmentValue: {
-                          //       percentage: 10,
-                          //     },
-                          //     afterCycle: 0,
-                          //     computedPrice: '10.79',
-                          //   },
-                          // },
                         }}
                         itemToAdd={itemToAdd}
                         productVariants={sellingPlanData.sellingPlanGroup.productVariants.edges}
+                        lineItems={lineItems}
+                        isSubscriptionBox={isSubscriptionBox}
                         toggleActive={toggleActive}
                         setMsg={setMsg}
                         setToastError={setToastError}
-                        refetch={refetch}
+                        refetch={subscriptionRefetch}
                       />
                     </Stack>
                   </>
@@ -337,7 +362,7 @@ function EditSubscription() {
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                 </Stack>
               </Card>
@@ -439,7 +464,7 @@ function EditSubscription() {
                     toggleActive={toggleActive}
                     setMsg={setMsg}
                     setToastError={setToastError}
-                    refetch={refetch}
+                    refetch={subscriptionRefetch}
                   />
                 </Stack>
               </Card>

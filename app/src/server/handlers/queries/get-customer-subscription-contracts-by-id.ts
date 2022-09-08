@@ -76,7 +76,7 @@ export function CUSTOMER_SUBSCRIPTIONS_CONTRACTS_BY_ID_GET() {
                       }
                     }
                   }
-                  lines(first: 5) {
+                  lines(first: 10) {
                     edges {
                       node {
                         id
@@ -97,6 +97,10 @@ export function CUSTOMER_SUBSCRIPTIONS_CONTRACTS_BY_ID_GET() {
                           basePrice {
                             amount
                           }
+                        }
+                        customAttributes {
+                          key
+                          value
                         }
                       }
                     }
@@ -197,6 +201,10 @@ interface LineData {
         amount: string;
       };
     };
+    customAttributes: {
+      key: string;
+      value: string;
+    }[];
   };
 }
 
