@@ -3,7 +3,6 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { useQuery, useLazyQuery } from '@apollo/client';
 import { GET_SUBSCRIPTION_BY_ID, GET_SELLING_PLAN_GROUP_WITH_VARIANTS } from '../handlers';
 import { Line } from '../types/subscriptions';
-import { filter } from 'compression';
 
 export function useSubscription(id: string) {
   // State
