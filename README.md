@@ -4,6 +4,8 @@
 
 🚧🔨👷 Currently Under Development
 
+The current Docker Stack uses Google Oauth, to access exposed containers, via the `thomseddon/traefik-forward-auth` image. You don't need this if you don't expose the Traefik dashboard. You should probably replace this in production. You could also replace Traefik with NGINX.
+
 ## Environmental Variables
 
 .env 
