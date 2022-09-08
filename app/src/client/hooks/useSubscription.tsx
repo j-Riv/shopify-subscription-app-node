@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useQuery, useLazyQuery } from '@apollo/client';
 import { GET_SUBSCRIPTION_BY_ID, GET_SELLING_PLAN_GROUP_WITH_VARIANTS } from '../handlers';
 import { Line } from '../types/subscriptions';
+import { filter } from 'compression';
 
 export function useSubscription(id: string) {
   // State
@@ -27,6 +28,7 @@ export function useSubscription(id: string) {
   const [zip, setZip] = useState<string>('');
 
   const [itemToAdd, setItemToAdd] = useState<string>('');
+  const [itemsToAdd, setItemsToAdd] = useState<any[]>([]);
 
   const getSellingPlanGroupId = (sellingPlanId: string, groups: any[]) => {
     // loop through groups and find group with id
@@ -102,6 +104,17 @@ export function useSubscription(id: string) {
     },
   });
 
+  useEffect(() => {
+    if (!sellingPlanData) return;
+    // update items to add when line items changes
+    // exclude items already in subscription
+    const excludeItems = lineItems.map((el: any) => el.node.variantId);
+    const filteredItems = sellingPlanData.sellingPlanGroup.productVariants.edges.filter(
+      (el: any) => el.node.sellableOnlineQuantity >= 1 && !excludeItems.includes(el.node.id),
+    );
+    setItemsToAdd(filteredItems);
+  }, [sellingPlanData, lineItems]);
+
   // handlers
   const handleIntervalChange = (value: string) => setInterval(value);
 
@@ -171,6 +184,7 @@ export function useSubscription(id: string) {
     province,
     zip,
     itemToAdd,
+    itemsToAdd,
     // handlers
     handleCompanyChange,
     handleFirstNameChange,

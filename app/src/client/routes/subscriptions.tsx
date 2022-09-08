@@ -62,6 +62,7 @@ function EditSubscription() {
     province,
     zip,
     itemToAdd,
+    itemsToAdd,
     // handlers
     handleCompanyChange,
     handleFirstNameChange,
@@ -113,21 +114,16 @@ function EditSubscription() {
     });
   }, [subscriptionData]);
 
-  const itemToAddOptions = useMemo(() => {
-    if (!sellingPlanData) return;
-    // exclude items already in subscription
-    const excludeItems = lineItems.map((el: any) => el.node.variantId);
-    return sellingPlanData.sellingPlanGroup.productVariants.edges
-      .filter(
-        (el: any) => el.node.sellableOnlineQuantity >= 1 && !excludeItems.includes(el.node.id),
-      )
-      .map((el: any) => {
+  const itemToAddOptions = useMemo(
+    () =>
+      itemsToAdd.map((el: any) => {
         return {
           label: `${el.node.sku} - ${el.node.product.title} - ${el.node.title}`,
           value: el.node.id,
         };
-      });
-  }, [sellingPlanData, lineItems]);
+      }),
+    [itemsToAdd],
+  );
 
   const isSubscriptionBox = useMemo(() => {
     if (!subscriptionData) return;
