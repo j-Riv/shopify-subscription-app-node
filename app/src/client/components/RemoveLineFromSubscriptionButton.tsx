@@ -44,12 +44,29 @@ const RemoveLineFromSubscriptionButton = ({
   // get updated pricing per line
   const linesWithUpdatedPrices: any[] = [];
   lineItems.forEach((line: any) => {
-    if (lineId !== line.node.id)
+    if (lineId !== line.node.id) {
+      const computedPrice = calculateCurrentPrice(
+        discountRate,
+        line.node.pricingPolicy.basePrice.amount,
+      );
+
       linesWithUpdatedPrices.push({
         id: line.node.id,
         quantity: line.node.quantity,
-        currentPrice: calculateCurrentPrice(discountRate, line.node.pricingPolicy.basePrice.amount),
+        currentPrice: computedPrice,
+        pricingPolicy: {
+          basePrice: line.node.pricingPolicy.basePrice.amount,
+          cycleDiscounts: {
+            adjustmentType: 'PERCENTAGE',
+            adjustmentValue: {
+              percentage: discountRate * 100,
+            },
+            afterCycle: 0,
+            computedPrice: computedPrice,
+          },
+        },
       });
+    }
   });
   const [updateSubscriptionContract] = useMutation(UPDATE_SUBSCRIPTION_CONTRACT, {
     onCompleted: (data) => {
@@ -58,6 +75,7 @@ const RemoveLineFromSubscriptionButton = ({
           updateDraftLine(data.subscriptionContractUpdate.draft.id, line.id, {
             quantity: line.quantity,
             currentPrice: line.currentPrice,
+            pricingPolicy: line.pricingPolicy,
           }),
         );
         removeDraftLine(data.subscriptionContractUpdate.draft.id, lineId);
