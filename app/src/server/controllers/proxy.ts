@@ -202,6 +202,17 @@ export const updateCustomerSubscriptionLines = async (req: Request, res: Respons
               return await updateSubscriptionDraftLine(client, draftId, line.id, {
                 currentPrice: line.currentPrice,
                 quantity: line.quantity,
+                pricingPolicy: {
+                  basePrice: line.basePrice,
+                  cycleDiscounts: {
+                    adjustmentType: 'PERCENTAGE',
+                    adjustmentValue: {
+                      percentage: discountRate * 100,
+                    },
+                    afterCycle: 0,
+                    computedPrice: line.currentPrice,
+                  },
+                },
               });
             }
           });

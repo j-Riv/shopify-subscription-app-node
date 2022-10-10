@@ -54,13 +54,25 @@ const UpdateSubscriptionButton = ({
         // get updated pricing per line
         const linesWithUpdatedPrices = lineItems.map((line: any) => {
           let quantity = line.node.id === lineId ? input.quantity : line.node.quantity;
+          const computedPrice = calculateCurrentPrice(
+            discountRate,
+            line.node.pricingPolicy.basePrice.amount,
+          );
           return {
             id: line.node.id,
             quantity: quantity,
-            currentPrice: calculateCurrentPrice(
-              discountRate,
-              line.node.pricingPolicy.basePrice.amount,
-            ),
+            currentPrice: computedPrice,
+            pricingPolicy: {
+              basePrice: line.node.pricingPolicy.basePrice.amount,
+              cycleDiscounts: {
+                adjustmentType: 'PERCENTAGE',
+                adjustmentValue: {
+                  percentage: discountRate * 100,
+                },
+                afterCycle: 0,
+                computedPrice: computedPrice,
+              },
+            },
           };
         });
         // update all lines with new pricing
@@ -68,6 +80,7 @@ const UpdateSubscriptionButton = ({
           updateDraftLine(data.subscriptionContractUpdate.draft.id, line.id, {
             quantity: line.quantity,
             currentPrice: line.currentPrice,
+            pricingPolicy: line.pricingPolicy,
           }),
         );
         // updateDraftLine(data.subscriptionContractUpdate.draft.id, lineId, input);

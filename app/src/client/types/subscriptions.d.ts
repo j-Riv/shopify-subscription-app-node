@@ -139,8 +139,10 @@ export interface SubscriptionContract {
 
 export interface Line {
   node: {
+    [x: string]: string;
     id: string;
     productId: string;
+    variantId: string;
     title: string;
     variantTitle: string;
     quantity: string;

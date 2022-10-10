@@ -27,6 +27,7 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
           node {
             id
             productId
+            variantId
             title
             variantTitle
             quantity
@@ -55,6 +56,8 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
                 currencyCode
               }
             }
+            sellingPlanId
+            sellingPlanName
             customAttributes {
               key
               value
@@ -86,6 +89,20 @@ export const GET_SUBSCRIPTION_BY_ID = gql`
             company
             firstName
             lastName
+          }
+        }
+      }
+    }
+    sellingPlanGroups(first: 25) {
+      edges {
+        node {
+          id
+          sellingPlans(first: 25) {
+            edges {
+              node {
+                id
+              }
+            }
           }
         }
       }
