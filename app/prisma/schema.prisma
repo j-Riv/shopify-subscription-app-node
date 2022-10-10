@@ -15,12 +15,13 @@ model ActiveShops {
 }
 
 model SubscriptionContracts {
-  id                  String   @unique
+  id                  String    @unique
   shop                String
   status              String
   nextBillingDate     DateTime
   interval            String
   intervalCount       Int
-  paymentFailureCount Int      @default(0)
+  paymentFailureCount Int       @default(0)
   contract            Json
+  outOfStock          Boolean   @default(false)
 }

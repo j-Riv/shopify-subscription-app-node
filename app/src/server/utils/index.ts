@@ -133,6 +133,37 @@ export const sendMailGunRenew = async (
   });
 };
 
+export const sendMailGunRenewBackInStock = async (
+  shop: string,
+  email: string,
+  name: string,
+  nextBillingDate: string,
+) => {
+  const mg = mailgun({
+    apiKey: process.env.MAILGUN_API_KEY,
+    domain: process.env.MAILGUN_DOMAIN,
+  });
+  const data = {
+    from: `${process.env.MAILGUN_SENDER} <no-reply@${process.env.MAILGUN_DOMAIN}>`,
+    to: `${email}`,
+    bcc: `${process.env.MAILGUN_ADMIN_EMAIL}`,
+    subject: `Items are now back in stock, your subscription will renew soon`,
+    html: `Hello ${name}, This is a friendly reminder that your subscription will automatically renew on ${formatDateForEmail(
+      nextBillingDate,
+    )}. To manage your subscriptions, log in to your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.`,
+  };
+  Logger.log('info', `Sending MailGun Subscription Back in Stock Renewal Soon`);
+  mg.messages().send(data, function (error, body) {
+    if (error)
+      Logger.log(
+        'error',
+        `Error sending MailGun Subscription Back in Stock Renewal Soon: ${error}`,
+      );
+    Logger.log('info', `MailGun Subscription Renewal Soon Response: ${body.message}`);
+    return body.message;
+  });
+};
+
 export const formatDateForEmail = (date: string) => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const billingDate = new Date(date) as any;
