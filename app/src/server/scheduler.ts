@@ -21,7 +21,12 @@ import {
   getProductVariantById,
   getDefaultLocation,
 } from './handlers/index.js';
-import { generateNextBillingDate, sendMailGunPause, sendMailGunRenew } from './utils/index.js';
+import {
+  generateNextBillingDate,
+  sendMailGunPause,
+  sendMailGunRenew,
+  sendMailGunRenewBackInStock,
+} from './utils/index.js';
 import Logger from './logger.js';
 import { SubscriptionContract, SubscriptionLine } from './types/subscriptions';
 dotenv.config();
@@ -31,7 +36,6 @@ const RENEWAL_NOTIFICATION_DAYS = 5;
 
 export const scheduler = () => {
   runBillingAttempts();
-  runOutOfStockRenewal();
 
   const everyday6amRule = new schedule.RecurrenceRule();
   everyday6amRule.hour = 6;
@@ -399,7 +403,7 @@ export const runOutOfStockRenewal = async () => {
 
             const input = {
               status: 'ACTIVE',
-              // nextBillingDate: nextBillingDate,
+              nextBillingDate: nextBillingDate,
             };
 
             let draftId = await updateSubscriptionContract(client, contract.id);
@@ -415,7 +419,7 @@ export const runOutOfStockRenewal = async () => {
               );
               // create new email send
               // send mailgun
-              sendMailGunRenew(
+              sendMailGunRenewBackInStock(
                 shop,
                 shopifyContract.customer.email,
                 shopifyContract.customer.firstName,
