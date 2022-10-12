@@ -77,9 +77,9 @@ export const scheduler = () => {
   });
 
   const everyday7amRule = new schedule.RecurrenceRule();
-  everyday10amRule.hour = 7;
-  everyday10amRule.minute = 0;
-  everyday10amRule.tz = 'America/Los_Angeles';
+  everyday7amRule.hour = 7;
+  everyday7amRule.minute = 0;
+  everyday7amRule.tz = 'America/Los_Angeles';
 
   const runOutOfStockRenewalJob = schedule.scheduleJob(everyday7amRule, async function () {
     Logger.log('info', `Running OOS Renewal Notification Sync Rule: ${everyday7amRule}`);
