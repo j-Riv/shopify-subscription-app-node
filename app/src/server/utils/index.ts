@@ -89,7 +89,7 @@ export const sendMailGunPause = async (
     from: `${process.env.MAILGUN_SENDER} <no-reply@${process.env.MAILGUN_DOMAIN}>`,
     to: `${email}`,
     bcc: `${process.env.MAILGUN_ADMIN_EMAIL}`,
-    subject: 'Your subscription has neen paused due to item(s) being out of stock',
+    subject: 'Your subscription has been paused due to item(s) being out of stock',
     html: `
       <p>Subscription (${
         id[id.length - 1]
