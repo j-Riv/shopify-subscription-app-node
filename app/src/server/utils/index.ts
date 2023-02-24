@@ -41,7 +41,7 @@ export const sendMailGunPaymentFailure = async (
   name: string,
   nextBillingDate: string,
 ) => {
-  const subject = `We coudn't process your subscription payment`;
+  const subject = `We couldn't process your subscription payment`;
   const message = `<p>Hello ${name}, there was a problem processing your subscription payment. We will try to run your card again on ${formatDateForEmail(
     nextBillingDate,
   )}. To update your payment method, log into your <a href="https://${shop}/account/login">account</a> and select manage subscriptions.</p>`;

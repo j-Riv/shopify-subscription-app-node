@@ -225,7 +225,7 @@ export const runBillingAttempts = async () => {
 // };
 
 export const runRenewalNotification = async () => {
-  Logger.log('info', `RUNNING RENEWEING SOON`);
+  Logger.log('info', `RUNNING RENEWING SOON`);
   // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
@@ -240,7 +240,7 @@ export const runRenewalNotification = async () => {
     const nextBillingDate = new Date(now).toISOString().split('T')[0] + 'T00:00:00Z';
     const contracts = await getLocalContractsRenewingSoonByShop(shop, nextBillingDate);
     if (contracts) {
-      Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWEING SOON`);
+      Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWING SOON`);
       // loop through contracts
       contracts.forEach(async (contract) => {
         // create billing attempt
@@ -409,7 +409,7 @@ export const runOutOfStockRenewal = async () => {
             let draftId = await updateSubscriptionContract(client, contract.id);
             draftId = await updateSubscriptionDraft(client, draftId, input);
             const subscription = await commitSubscriptionDraft(client, draftId);
-            console.log('UPDATED SUBSCRIPITON', JSON.stringify(subscription));
+            console.log('UPDATED SUBSCRIPTION', JSON.stringify(subscription));
             // send email
             if (subscription.id === contract.id) {
               const email = shopifyContract.customer.email;
