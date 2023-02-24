@@ -7,6 +7,8 @@ import {
   getLocalContractsRenewingSoonByShop,
   getLocalContractsWithPaymentFailuresByShop,
   saveAllContracts,
+  updateLocalContractOutOfStock,
+  getLocalContractsWithOutOfStock,
 } from './prisma-store.js';
 import 'isomorphic-fetch';
 import {
@@ -19,7 +21,12 @@ import {
   getProductVariantById,
   getDefaultLocation,
 } from './handlers/index.js';
-import { sendMailGunPause, sendMailGunRenew } from './utils/index.js';
+import {
+  generateNextBillingDate,
+  sendMailGunPause,
+  sendMailGunRenew,
+  sendMailGunRenewBackInStock,
+} from './utils/index.js';
 import Logger from './logger.js';
 import { SubscriptionContract, SubscriptionLine } from './types/subscriptions';
 dotenv.config();
@@ -67,6 +74,16 @@ export const scheduler = () => {
   const renewalNotificationJob = schedule.scheduleJob(everyday10amRule, async function () {
     Logger.log('info', `Running Renewal Notification Sync Rule: ${everyday10amRule}`);
     runRenewalNotification();
+  });
+
+  const everyday7amRule = new schedule.RecurrenceRule();
+  everyday7amRule.hour = 7;
+  everyday7amRule.minute = 0;
+  everyday7amRule.tz = 'America/Los_Angeles';
+
+  const runOutOfStockRenewalJob = schedule.scheduleJob(everyday7amRule, async function () {
+    Logger.log('info', `Running OOS Renewal Notification Sync Rule: ${everyday7amRule}`);
+    runOutOfStockRenewal();
   });
 };
 
@@ -151,6 +168,7 @@ export const runBillingAttempts = async () => {
               );
             } else {
               // pause subscription and send email
+              await updateLocalContractOutOfStock(shop, contract.id, 'PAUSED', true);
               // update subscription
               Logger.log('info', `Pausing Subscription Contract:  ${contract.id} due to OOS`);
 
@@ -207,7 +225,7 @@ export const runBillingAttempts = async () => {
 // };
 
 export const runRenewalNotification = async () => {
-  Logger.log('info', `RUNNING RENEWEING SOON`);
+  Logger.log('info', `RUNNING RENEWING SOON`);
   // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
@@ -222,7 +240,7 @@ export const runRenewalNotification = async () => {
     const nextBillingDate = new Date(now).toISOString().split('T')[0] + 'T00:00:00Z';
     const contracts = await getLocalContractsRenewingSoonByShop(shop, nextBillingDate);
     if (contracts) {
-      Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWEING SOON`);
+      Logger.log('info', `FOUND ${contracts.length} RUNNING RENEWING SOON`);
       // loop through contracts
       contracts.forEach(async (contract) => {
         // create billing attempt
@@ -268,7 +286,8 @@ export const runSubscriptionContractSync = async () => {
 };
 
 export const runCancellation = async () => {
-  Logger.log('info', `RUNNING CLEANUP`); // get active shopify stores
+  Logger.log('info', `RUNNING CLEANUP`);
+  // get active shopify stores
   const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
   const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
   // loop through active shops
@@ -296,6 +315,120 @@ export const runCancellation = async () => {
           // commit changes to draft
           const contractId = await commitSubscriptionDraft(client, updatedDraftId);
           Logger.log('info', `Contract Id: ${contractId}`);
+        } catch (err: any) {
+          Logger.log('error', err.message);
+        }
+      });
+    }
+  });
+};
+
+export const runOutOfStockRenewal = async () => {
+  Logger.log('info', `RUNNING OOS CHECK`);
+  // get active shopify stores
+  const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
+  const shops = Object.keys(ACTIVE_SHOPIFY_SHOPS);
+  shops.forEach(async (shop: string) => {
+    // get token
+    const shopData = await loadCurrentShop(shop);
+    const token = shopData.accessToken;
+    // get all active contracts for shop
+    const contracts = await getLocalContractsWithOutOfStock(shop);
+    if (contracts) {
+      // loop through contracts
+      contracts.forEach(async (contract) => {
+        // check if items still oos
+        try {
+          const client = createClient(shop, token);
+
+          const shopifyContract: SubscriptionContract = await getSubscriptionContract(
+            client,
+            contract.id,
+          );
+
+          // check if quantity exists
+          const defaultLocation = await getDefaultLocation(client);
+          const defaultLocationId = defaultLocation.id;
+
+          let oosProducts: string[] = [];
+          await Promise.all(
+            shopifyContract.lines.edges.map(async (line: SubscriptionLine) => {
+              Logger.log(
+                'info',
+                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+              );
+              console.log(
+                `CHECKING PRODUCT ${line.node.variantId}, AT LOCATION: ${defaultLocationId}`,
+              );
+              const variantProduct = await getProductVariantById(
+                client,
+                line.node.variantId,
+                defaultLocationId,
+              );
+              const variantAvailable = variantProduct.inventoryItem.inventoryLevel.available;
+              Logger.log(
+                'info',
+                `Variant: ${variantProduct.product.title}: ${JSON.stringify(variantAvailable)}`,
+              );
+              // const variantAvailable =
+              //   variantProduct.inventoryItem.inventoryLevels.edges[0].node.available;
+              Logger.log(
+                'info',
+                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+              );
+              console.log(
+                `CHECKING PRODUCT ${variantProduct.id}, quantity available: ${variantAvailable}, quantity needed: ${line.node.quantity}`,
+              );
+              if (variantAvailable <= line.node.quantity) {
+                Logger.log('info', `FOUND OUT OF STOCK ITEM ${variantProduct.product.title}`);
+                oosProducts.push(variantProduct.product.title);
+              }
+            }),
+          );
+
+          // update contract
+          console.log('OOS PRODUCTS', oosProducts);
+          console.log('OOS PRODUCTS LENGTH', oosProducts.length);
+          if (oosProducts.length === 0) {
+            // unpause subscription contract and send email
+            // const oos = await updateLocalContractOutOfStock(shop, contract.id, 'ACTIVE', false);
+            // console.log('OOS UPDATE LOCAL', JSON.stringify(oos));
+            // update subscription
+            Logger.log(
+              'info',
+              `Activating Subscription Contract:  ${contract.id} due to OOS being in stock`,
+            );
+            // generate next billing date
+            const nextBillingDate = generateNextBillingDate('DAY', 2);
+
+            const input = {
+              status: 'ACTIVE',
+              nextBillingDate: nextBillingDate,
+            };
+
+            let draftId = await updateSubscriptionContract(client, contract.id);
+            draftId = await updateSubscriptionDraft(client, draftId, input);
+            const subscription = await commitSubscriptionDraft(client, draftId);
+            console.log('UPDATED SUBSCRIPTION', JSON.stringify(subscription));
+            // send email
+            if (subscription.id === contract.id) {
+              const email = shopifyContract.customer.email;
+              Logger.log(
+                'info',
+                `Sending BACK IN STOCK Email to: ${email} for Contract: ${contract.id}`,
+              );
+              // create new email send
+              // send mailgun
+              sendMailGunRenewBackInStock(
+                shop,
+                shopifyContract.customer.email,
+                shopifyContract.customer.firstName,
+                nextBillingDate.split('T')[0],
+              );
+            }
+          } else {
+            Logger.log('info', `Contract: ${contract.id} will remain paused due to oos items`);
+          }
         } catch (err: any) {
           Logger.log('error', err.message);
         }

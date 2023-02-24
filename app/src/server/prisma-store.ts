@@ -196,6 +196,27 @@ export const updateLocalContractPaymentFailure = async (
   return updateContract;
 };
 
+export const updateLocalContractOutOfStock = async (
+  shop: string,
+  id: string,
+  status: string,
+  oos: boolean,
+) => {
+  const contract: Prisma.SubscriptionContractsUpdateInput = {
+    status: status,
+    outOfStock: oos,
+  };
+
+  const updateContract = await prisma.subscriptionContracts.update({
+    where: {
+      id: id,
+    },
+    data: contract,
+  });
+
+  return updateContract;
+};
+
 export const getLocalContractsByShop = async (shop: string) => {
   try {
     const today = new Date().toISOString().substring(0, 10) + 'T00:00:00Z';
@@ -263,6 +284,30 @@ export const getLocalContractsWithPaymentFailuresByShop = async (shop: string) =
           },
           paymentFailureCount: {
             gte: 2,
+          },
+        },
+      },
+    });
+
+    return localContracts;
+  } catch (err: any) {
+    Logger.log('error', err.message);
+  }
+};
+
+export const getLocalContractsWithOutOfStock = async (shop: string) => {
+  try {
+    Logger.log('info', `Getting all contracts for shop: ${shop} that are paused due to oos`);
+
+    const localContracts = await prisma.subscriptionContracts.findMany({
+      where: {
+        AND: {
+          shop: shop,
+          status: {
+            equals: 'PAUSED',
+          },
+          outOfStock: {
+            equals: true,
           },
         },
       },
