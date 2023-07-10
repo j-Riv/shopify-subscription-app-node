@@ -1,0 +1,23 @@
+{
+  "name": "shopify-app-extension-template",
+  "version": "0.1.0",
+  "main": "extension.ts",
+  "engines": {
+    "node": ">=10.16.0"
+  },
+  "repository": "https://github.com/Shopify/shopify-app-extension-template.git",
+  "author": "Shopify <app-extensions@shopify.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "typescript": "^3.0.0"
+  },
+  "scripts": {
+    "serverOLD": "admin-ui-extensions-run server --entry=\"src/index.tsx\" --port=39351 --type=PRODUCT_SUBSCRIPTION",
+    "buildOLD": "admin-ui-extensions-run build --entry=\"src/index.tsx\""
+  },
+  "dependencies": {
+    "@shopify/admin-ui-extensions-react": "^1.0.1",
+    "react": "^17.0.2"
+  }
+}

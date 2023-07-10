@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import cors from 'cors';
 import { Request, Response, NextFunction, Express } from 'express';
 import {
   getAllSubscriptionGroups,
@@ -15,6 +16,7 @@ dotenv.config();
 
 const verifyJwt = async (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers['x-suavescribe-token'];
+  console.log('TOKEN', token);
   if (!token) return res.status(401);
   try {
     // decode
@@ -31,6 +33,7 @@ const verifyJwt = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const subscriptionRoutes = (app: Express) => {
+  app.use(cors);
   // Extension routes
   app.post('/subscription-plan/all', verifyJwt, getAllSubscriptionGroups);
 

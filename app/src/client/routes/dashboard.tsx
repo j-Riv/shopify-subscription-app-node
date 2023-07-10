@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
 import { Badge, Button, Card, Frame, Page, Pagination, Toast } from '@shopify/polaris';
 import { TitleBar, useAppBridge } from '@shopify/app-bridge-react';
-import { authenticatedFetch } from '@shopify/app-bridge-utils';
+import { authenticatedFetch } from '@shopify/app-bridge/utilities';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { GET_SUBSCRIPTION_CONTRACTS, GET_PREV_SUBSCRIPTION_CONTRACTS } from '../handlers';
 import { formatDate, formatId } from '../utils/formatters';
@@ -35,6 +35,7 @@ function Dashboard() {
       first: subsPerPage,
     },
   });
+  console.log('ERROR', error);
 
   if (loading) return <LoadingIndex tableRows={5} />;
   if (error) return <ErrorState err={error.message} />;
@@ -58,7 +59,7 @@ function Dashboard() {
     toggleActive();
     const fetchFunction = authenticatedFetch(app);
     try {
-      const response = await fetchFunction('/sync', {
+      const response = await fetchFunction('/api/sync', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

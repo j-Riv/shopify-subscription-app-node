@@ -1,0 +1,3 @@
+name = "Subscriptions"
+scopes = "write_products,read_products,read_inventory,read_customers,write_customers,read_orders,write_orders,read_customer_payment_methods,write_own_subscription_contracts,read_own_subscription_contracts,read_shipping,write_shipping"
+extension_directories = ["extensions/*" ]

@@ -337,14 +337,20 @@ export const createContract = async (shop: string, token: string, body: any) => 
 };
 
 export const updateContract = async (shop: string, token: string, body: any) => {
+  console.log('UPDATING CONTRACT');
+  console.log('SHOP', shop);
+  console.log('TOKEN', token);
+  console.log('BODY', body);
   body = JSON.parse(body);
   const id = body.admin_graphql_api_id;
 
   try {
     Logger.log('info', `Updating Contract: ${id}`);
     const exists = await getLocalContract(id);
+    console.log('CONTRACT EXISTS LOCALLY?', exists);
     const client: ApolloClient<unknown> = createClient(shop, token);
     const contract = await getSubscriptionContract(client, body.admin_graphql_api_id);
+    console.log('CONTRACT', contract);
     let res: any;
     if (exists) {
       const paymentFailureCount = exists.paymentFailureCount;
@@ -356,6 +362,7 @@ export const updateContract = async (shop: string, token: string, body: any) => 
     } else {
       res = await createLocalContract(shop, contract);
     }
+    console.log('RES', res);
     return res ? res : false;
   } catch (err: any) {
     Logger.log('error', err.message);
