@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 import { Request as Req, Response, NextFunction } from 'express';
 import { ApolloClient } from '@apollo/client';
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
+import fs, { readFileSync } from 'fs';
+import { join } from 'path';
 import mailgun from 'mailgun-js';
 import {
   commitSubscriptionDraft,
@@ -60,6 +61,7 @@ export const getCustomerSubscriptions = async (req: Request, res: Response) => {
         const verified = verifyToken(shop, customerId, token);
         if (verified) {
           const pgRes = await loadCurrentShop(shop);
+          console.log('PG RES', pgRes);
           if (pgRes) {
             req.client = createClient(shop, pgRes.accessToken);
             const subscriptions = await getCustomerSubscriptionContractsById(req, customerId);
@@ -374,6 +376,7 @@ export const generateCustomerAuth = async (req: Request, res: Response) => {
     customerId: string;
     customerEmail: string;
   };
+  console.log('REQ.BODY', req.body);
   if (body.customerId && params.shop) {
     // generate auth token
     const shop = params.shop as string;
@@ -387,7 +390,7 @@ export const generateCustomerAuth = async (req: Request, res: Response) => {
       process.env.APP_PROXY_SECRET,
       { expiresIn: '60m' },
     );
-    const url = `https://${shop}/apps/app_proxy?shop=${shop}&customer_id=${customer_id}&token=${token}`;
+    const url = `https://${shop}/apps/app_proxy?shop=${shop}&customer_id=${customer_id}&token=${token}&host=${process.env.HOST}`;
     // generate email
     // disabled since we now just redirect with jwt
     // const emailResponse = await sendMailGun(shop, customer_email, url);
@@ -414,11 +417,10 @@ export const liquidApplicationProxy = async (req: Request, res: Response) => {
     const verified = verifyToken(shop, customer_id, token);
     res.set('Content-Type', 'application/liquid');
     if (verified) {
-      const app = await readFileThunk(`${process.env.APP_PROXY}/build/index.html`);
-      res.send(`
+      return res.send(`
         {% if customer %}
           {% if customer.id == ${params.customer_id} %}
-            ${app}
+            ${readFileSync(join(process.env.APP_PROXY, '/build/index.html'))}
           {% else %}
           <div style="text-align: center;">
             <p>Something went wrong ...</p>
@@ -430,13 +432,48 @@ export const liquidApplicationProxy = async (req: Request, res: Response) => {
         {% endif %}
       `);
     } else {
-      res.send(verificationFailure);
+      return res.send(verificationFailure);
     }
   } else {
     console.log('ERROR', 'Missing Token, Shop or Customer Id.');
-    res.send(verificationFailure);
+    return res.send(verificationFailure);
   }
 };
+
+// export const liquidApplicationProxy = async (req: Request, res: Response) => {
+//   const params = req.query;
+//   console.log('LIQUID');
+//   if (params.token && params.shop && params.customer_id) {
+//     const token = params.token as string;
+//     const shop = params.shop as string;
+//     const customer_id = params.customer_id as string;
+//     const verified = verifyToken(shop, customer_id, token);
+//     res.set('Content-Type', 'application/liquid');
+//     if (verified) {
+//       const app = await readFileThunk(`${process.env.APP_PROXY}/build/index.html`);
+
+//       res.send(`
+//         {% if customer %}
+//           {% if customer.id == ${params.customer_id} %}
+//             ${app}
+//           {% else %}
+//           <div style="text-align: center;">
+//             <p>Something went wrong ...</p>
+//             <p><a href="/account">Go Back to Account</a></p>
+//           </div>
+//           {% endif %}
+//         {% else %}
+//         <p>Please Login!</p>
+//         {% endif %}
+//       `);
+//     } else {
+//       res.send(verificationFailure);
+//     }
+//   } else {
+//     console.log('ERROR', 'Missing Token, Shop or Customer Id.');
+//     res.send(verificationFailure);
+//   }
+// };
 
 export const applicationProxy = async (req: Request, res: Response) => {
   const params = req.query;

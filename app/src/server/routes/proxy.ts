@@ -1,9 +1,11 @@
 import dotenv from 'dotenv';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
+import fs, { readFileSync } from 'fs';
 import crypto from 'crypto';
+import expressServeStaticGzip from 'express-static-gzip';
 import { Request, Response, NextFunction, Express } from 'express';
 import {
-  // applicationProxy,
+  applicationProxy,
   updateCustomerSubscription,
   updateCustomerSubscriptionLines,
   updateSubscriptionPaymentMethod,
@@ -38,7 +40,7 @@ const validateSignature = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // App Proxy routes
-const proxyRoutes = async (app: Express) => {
+const proxyRoutes = async (app: Express, shopify) => {
   app.post('/app_proxy/subscription/edit', validateSignature, updateCustomerSubscription);
 
   app.post(
@@ -56,12 +58,21 @@ const proxyRoutes = async (app: Express) => {
   app.post('/app_proxy/auth', validateSignature, generateCustomerAuth);
 
   // new
-  const compression = await import('compression').then(({ default: fn }) => fn);
-  const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
-  const fs = await import('fs');
-  app.use(compression());
-  app.use(serveStatic(resolve('proxy/build')));
+  // const compression = await import('compression').then(({ default: fn }) => fn);
+  // const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
+  // const fs = await import('fs');
+  // app.use(compression());
+  // app.use(serveStatic(resolve('proxy/build')));
   // end new
+
+  app.use(shopify.cspHeaders());
+  app.use(
+    expressServeStaticGzip(`${process.env.APP_PROXY}/build`, {
+      enableBrotli: true,
+      index: false,
+      orderPreference: ['br', 'gz'],
+    }),
+  );
 
   app.get('/app_proxy/static/css/:file', (req: Request, res: Response) => {
     res
@@ -77,8 +88,17 @@ const proxyRoutes = async (app: Express) => {
       .send(fs.readFileSync(`${process.env.APP_PROXY}/build/static/js/${req.params.file}`));
   });
 
+  // app.use('/app_proxy/*', async (_req, res) => {
+  //   return res
+  //     .status(200)
+  //     .set('Content-Type', 'application/liquid')
+  //     .send(readFileSync(join(process.env.APP_PROXY, '/build/index.html')));
+  // });
+
+  app.use('/app_proxy/*', validateSignature, liquidApplicationProxy);
+
   // send react app as liquid
-  app.get('/app_proxy', validateSignature, liquidApplicationProxy);
+  // app.get('/app_proxy', validateSignature, liquidApplicationProxy);
   // app.get('/app_proxy/', validateSignature, applicationProxy);
 };
 

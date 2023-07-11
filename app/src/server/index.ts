@@ -1,302 +1,154 @@
 // @ts-check
-import { resolve } from 'path';
+import { join } from 'path';
+import { readFileSync } from 'fs';
 import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import { Shopify, ApiVersion } from '@shopify/shopify-api';
-import RedisStore from './redis-store.js';
+import type { Request, Response, NextFunction } from 'express';
+import { type Session, DeliveryMethod, Shopify } from '@shopify/shopify-api';
+import expressServeStaticGzip from 'express-static-gzip';
+
+import shopify from './shopify.js';
+// Import Middleware
+import updateShopDataMiddleware from './middleware/shopData.js';
+// import Webhooks
+import GDPRWebhookHandlers from './webhooks/gdprHandlers.js';
+import AppWebhookHandlers from './webhooks/appHandlers.js';
+
 import {
-  loadActiveShops,
-  deleteActiveShop,
-  createContract,
-  loadCurrentShop,
-  updateContract,
-  updateSubscriptionContractAfterFailure,
-  updateSubscriptionContractAfterSuccess,
   getSubscriptionsByStatus,
   getAllPaymentFailures,
   saveAllContracts,
 } from './prisma-store.js';
 import Logger from './logger.js';
-import { scheduler } from './scheduler.js';
-import 'dotenv/config';
 
-import applyAuthMiddleware from './middleware/auth.js';
-import verifyRequest from './middleware/verify-request.js';
-import { ViteDevServer } from 'vite';
-
-// routes
+// Import Routes
 import subscriptionRoutes from './routes/subscriptions.js';
 import proxyRoutes from './routes/proxy.js';
 
-const USE_ONLINE_TOKENS = true;
-const TOP_LEVEL_OAUTH_COOKIE = 'shopify_top_level_oauth';
+const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || '8081', 10);
 
-const PORT = parseInt(process.env.PORT || '8081', 10);
-const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD;
+const STATIC_PATH = `${process.cwd()}/dist/client`;
 
-// Create a new instance of the custom storage class
-const sessionStorage = new RedisStore();
+// const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
 
-Shopify.Context.initialize({
-  API_KEY: process.env.SHOPIFY_API_KEY,
-  API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
-  SCOPES: process.env.SCOPES.split(','),
-  HOST_NAME: process.env.HOST.replace(/https:\/\//, ''),
-  // @ts-ignore
-  API_VERSION: '2023-07', // ApiVersion.July22,
-  IS_EMBEDDED_APP: true,
-  // This should be replaced with your preferred storage strategy
-  // SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
-  // Pass the sessionStorage methods to pass into a new instance of `CustomSessionStorage`
-  SESSION_STORAGE: new Shopify.Session.CustomSessionStorage(
-    sessionStorage.storeCallback.bind(sessionStorage),
-    sessionStorage.loadCallback.bind(sessionStorage),
-    sessionStorage.deleteCallback.bind(sessionStorage),
-  ),
-});
+const app = express();
 
-// Storing the currently active shops in memory will force them
-// to re - login when your server restarts.You should
-// persist this object in your app.
-// const ACTIVE_SHOPIFY_SHOPS = {};
-const ACTIVE_SHOPIFY_SHOPS = await loadActiveShops();
-// console.log('LOADING ACTIVE SHOPS FROM DB', ACTIVE_SHOPIFY_SHOPS);
-Shopify.Webhooks.Registry.addHandler('APP_UNINSTALLED', {
-  path: '/webhooks',
-  webhookHandler: async (topic, shop, body) => {
-    delete ACTIVE_SHOPIFY_SHOPS[shop];
-    deleteActiveShop(shop);
-  },
-});
+// Set up Shopify authentication
+app.get(shopify.config.auth.path, shopify.auth.begin());
+app.get(
+  shopify.config.auth.callbackPath,
+  shopify.auth.callback(),
+  updateShopDataMiddleware(app),
+  shopify.redirectToShopifyOrAppRoot(),
+);
+
+// Set up Shopify webhooks handling
+app.post(
+  shopify.config.webhooks.path,
+  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers }),
+);
+
+app.post(
+  shopify.config.webhooks.path,
+  shopify.processWebhooks({ webhookHandlers: AppWebhookHandlers }),
+);
 
 // init scheduler
-scheduler();
+// scheduler();
 
-// webhook handlers
-Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_CREATE', {
-  path: '/webhooks',
-  webhookHandler: async (topic, shop, body) => {
-    Logger.log('info', `Subscription Contract Create Webhook`);
-    const shopData = await loadCurrentShop(shop);
-    if (shopData) {
-      const token = shopData.accessToken;
-      createContract(shop, token, body);
-    }
-  },
+// If you are adding routes outside of the /api path, remember to
+// also add a proxy rule for them in web/frontend/vite.config.js
+
+// Unauthenticated routes
+// app.use('/api/billing', billingUnauthenticatedRoutes);
+
+app.use(express.json());
+subscriptionRoutes(app);
+proxyRoutes(app, shopify);
+
+// All endpoints after this point will require an active session
+app.use('/api/*', shopify.validateAuthenticatedSession());
+
+app.use('/api/*', (req: Request, res: Response, next: NextFunction) => {
+  const session: Session = res.locals?.shopify?.session;
+  const shop = session?.shop;
+  console.log('-->', req.baseUrl + req.path, '| { shop: ' + shop + ' }');
+  return next();
 });
 
-Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_CONTRACTS_UPDATE', {
-  path: '/webhooks',
-  webhookHandler: async (topic, shop, body) => {
-    Logger.log('info', `Subscription Contract Update Webhook`);
-    const shopData = await loadCurrentShop(shop);
-    if (shopData) {
-      const token = shopData.accessToken;
-      const success = await updateContract(shop, token, body);
-      Logger.log('info', `Subscription Contract Update: ${success.id}`);
-    }
-  },
-});
+// app.use(express.json());
 
-Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_SUCCESS', {
-  path: '/webhooks',
-  webhookHandler: async (topic, shop, body) => {
-    Logger.log('info', `Subscription Billing Attempt Success Webhook`);
-    const shopData = await loadCurrentShop(shop);
-    if (shopData) {
-      const token = shopData.accessToken;
-      updateSubscriptionContractAfterSuccess(shop, token, body);
-    }
-  },
-});
-
-Shopify.Webhooks.Registry.addHandler('SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE', {
-  path: '/webhooks',
-  webhookHandler: async (topic, shop, body) => {
-    Logger.log('info', `Subscription Billing Attempt Failure Webhook`);
-    const shopData = await loadCurrentShop(shop);
-    if (shopData) {
-      const token = shopData.accessToken;
-      const data = JSON.parse(body);
-      const errorCodes = [
-        'EXPIRED_PAYMENT_METHOD',
-        'INVALID_PAYMENT_METHOD',
-        'PAYMENT_METHOD_NOT_FOUND',
-      ];
-      if (
-        data.errorCode === 'PAYMENT_METHOD_DECLINED' ||
-        data.errorCode === 'AUTHENTICATION_ERROR' ||
-        data.errorCode === 'UNEXPECTED_ERROR'
-      ) {
-        // will try again tomorrow
-        updateSubscriptionContractAfterFailure(shop, token, body, false);
-      } else {
-        // get payment method id and send email
-        updateSubscriptionContractAfterFailure(shop, token, body, true);
-      }
-      // Will more than likely create  an errors table to display error notifications to user.
-      Logger.log('error', JSON.stringify(body));
-    }
-  },
-});
-
-// export for test use only
-export const createServer = async (
-  root = process.cwd(),
-  isProd = process.env.NODE_ENV === 'production',
-) => {
-  const app = express();
-  // console.log('SETTING APP VALUES', ACTIVE_SHOPIFY_SHOPS);
-  app.set('top-level-oauth-cookie', TOP_LEVEL_OAUTH_COOKIE);
-  app.set('active-shopify-shops', ACTIVE_SHOPIFY_SHOPS);
-  app.set('use-online-tokens', USE_ONLINE_TOKENS);
-  // console.log('APP SET', app.get('active-shopify-shops'));
-
-  app.use(cookieParser(Shopify.Context.API_SECRET_KEY));
-
-  app.use(cors());
-
-  applyAuthMiddleware(app);
-
-  app.post('/webhooks', async (req, res) => {
-    try {
-      await Shopify.Webhooks.Registry.process(req, res);
-      console.log('Webhook processed, returned status code 200');
-    } catch (error) {
-      console.log(`Failed to process webhook: ${error}`);
-      if (!res.headersSent) {
-        res.status(500).send(error.message);
-      }
-    }
-  });
-
-  app.get('/products-count', verifyRequest(app), async (req, res) => {
-    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
-    const { Product } = await import(
-      `@shopify/shopify-api/dist/rest-resources/${Shopify.Context.API_VERSION}/index.js`
-    );
-
-    const countData = await Product.count({ session });
-    res.status(200).send(countData);
-  });
-
-  app.post('/graphql', verifyRequest(app), async (req, res) => {
-    try {
-      const response = await Shopify.Utils.graphqlProxy(req, res);
-      res.status(200).send(response.body);
-    } catch (error) {
-      res.status(500).send(error.message);
-    }
-  });
-
-  app.use(express.json());
-
-  // routes
-  subscriptionRoutes(app);
-  proxyRoutes(app);
-
-  // move
-  app.get('/sync', verifyRequest(app), async (req, res, next) => {
-    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
-    const { shop, accessToken } = session;
-    try {
-      Logger.log('info', `Syncing contracts for shop: ${shop}`);
-      const response = await saveAllContracts(shop, accessToken);
-      res.status(200).json(response);
-    } catch (err: any) {
-      Logger.log('error', err.message);
-    }
-  });
-
-  app.post('/contracts-by-status', verifyRequest(app), async (req, res, next) => {
-    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
-    const { shop, accessToken } = session;
-    try {
-      Logger.log('info', `getting all contracts for shop: ${shop}`);
-      const response = await getSubscriptionsByStatus(shop, JSON.stringify(req.body));
-      res.status(200).json(response);
-    } catch (err: any) {
-      Logger.log('error', err.message);
-    }
-  });
-
-  app.get('/payment-failed', verifyRequest(app), async (req, res, next) => {
-    const session = await Shopify.Utils.loadCurrentSession(req, res, true);
-    const { shop } = session;
-    const contracts = await getAllPaymentFailures(shop);
-    res.status(200).json({ contracts });
-  });
-  // end move
-
-  app.use((req, res, next) => {
-    const { shop } = req.query;
-    if (Shopify.Context.IS_EMBEDDED_APP && shop) {
-      res.setHeader(
-        'Content-Security-Policy',
-        `frame-ancestors https://${shop} https://admin.shopify.com;`,
-      );
-    } else {
-      res.setHeader('Content-Security-Policy', "frame-ancestors 'none';");
-    }
-    next();
-  });
-
-  app.use('/*', (req, res, next) => {
-    const query = req.query as Record<string, string>;
-    const { shop } = query;
-
-    // Detect whether we need to reinstall the app, any request from Shopify will
-    // include a shop in the query parameters.
-    // console.log('ACTIVE_SHOPIFY_SHOPS', app.get('active-shopify-shops'));
-    if (app.get('active-shopify-shops')[shop] === undefined && shop) {
-      res.redirect(`/auth?${new URLSearchParams(query).toString()}`);
-    } else {
-      next();
-    }
-  });
-
-  /**
-   * @type {import('vite').ViteDevServer}
-   */
-  let vite: ViteDevServer;
-  if (!isProd) {
-    vite = await import('vite').then(({ createServer }) =>
-      createServer({
-        root,
-        logLevel: isTest ? 'error' : 'info',
-        server: {
-          port: PORT,
-          hmr: {
-            protocol: 'ws',
-            host: 'localhost',
-            port: 64999,
-            clientPort: 64999,
-          },
-          middlewareMode: 'html',
-        },
-      }),
-    );
-    app.use(vite.middlewares);
-  } else {
-    const compression = await import('compression').then(({ default: fn }) => fn);
-    const serveStatic = await import('serve-static').then(({ default: fn }) => fn);
-    const fs = await import('fs');
-    app.use(compression());
-    app.use(serveStatic(resolve('dist/client')));
-    app.use('/*', (req, res, next) => {
-      // Client-side routing will pick up on the correct
-      // route to render, so we always render the index here
-      res
-        .status(200)
-        .set('Content-Type', 'text/html')
-        .send(fs.readFileSync(`${process.cwd()}/dist/client/index.html`));
+app.post('/api/graphql', async (req: Request, res: Response) => {
+  try {
+    // @ts-ignore
+    const response = await shopify.api.clients.graphqlProxy({
+      session: res.locals.shopify.session,
+      // @ts-ignore
+      rawBody: req.body, // From my app
     });
+    res.status(200).send(response.body);
+  } catch (error) {
+    console.log('ERROR', error.message);
+    res.status(500).send(error.message);
   }
+});
 
-  return { app, vite };
-};
+// routes
+// subscriptionRoutes(app);
+// proxyRoutes(app, shopify);
 
-if (!isTest) {
-  createServer().then(({ app }) => app.listen(PORT));
-}
+// move
+app.get('/api/sync', async (req, res, next) => {
+  const session = res?.locals.shopify.session;
+  const { shop, accessToken } = session;
+  try {
+    Logger.log('info', `Syncing contracts for shop: ${shop}`);
+    const response = await saveAllContracts(shop, accessToken);
+    res.status(200).json(response);
+  } catch (err: any) {
+    Logger.log('error', err.message);
+  }
+});
+
+app.post('/api/contracts-by-status', async (req, res, next) => {
+  const session = res?.locals.shopify.session;
+  const { shop, accessToken } = session;
+  try {
+    Logger.log('info', `getting all contracts for shop: ${shop}`);
+    const response = await getSubscriptionsByStatus(shop, JSON.stringify(req.body));
+    res.status(200).json(response);
+  } catch (err: any) {
+    Logger.log('error', err.message);
+  }
+});
+
+app.get('/api/payment-failed', async (req, res, next) => {
+  const session = res?.locals.shopify.session;
+  const { shop } = session;
+  const contracts = await getAllPaymentFailures(shop);
+  res.status(200).json({ contracts });
+});
+// end move
+
+app.use(shopify.cspHeaders());
+app.use(
+  expressServeStaticGzip(STATIC_PATH, {
+    enableBrotli: true,
+    index: false,
+    orderPreference: ['br', 'gz'],
+  }),
+);
+
+// Reply to health check to let server know we are ready
+app.use('/health', (_req, res) => {
+  res.status(200).send();
+});
+
+app.use('/*', shopify.ensureInstalledOnShop(), async (_req, res) => {
+  return res
+    .status(200)
+    .set('Content-Type', 'text/html')
+    .send(readFileSync(join(STATIC_PATH, 'index.html')));
+});
+
+app.listen(PORT);
+console.log(`App running on port: ${PORT} ...`);

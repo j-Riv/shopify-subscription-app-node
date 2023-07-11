@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Badge, Button, Card, Frame, Page, Toast } from '@shopify/polaris';
 import { TitleBar, useAppBridge } from '@shopify/app-bridge-react';
-import { authenticatedFetch } from '@shopify/app-bridge-utils';
+import { authenticatedFetch } from '@shopify/app-bridge/utilities';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { formatDate, formatId } from '../utils/formatters';
 import Table from '../components/Table';
@@ -34,7 +34,7 @@ function PaymentFailures() {
   const getPaymentFailures = async () => {
     const fetchFunction = authenticatedFetch(app);
     try {
-      const response = await fetchFunction('/payment-failed', {
+      const response = await fetchFunction('/api/payment-failed', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

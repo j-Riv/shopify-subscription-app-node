@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Badge, Button, Card, Frame, Page, Select, Toast } from '@shopify/polaris';
 import { TitleBar, useAppBridge } from '@shopify/app-bridge-react';
-import { authenticatedFetch } from '@shopify/app-bridge-utils';
+import { authenticatedFetch } from '@shopify/app-bridge/utilities';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { formatDate, formatId } from '../utils/formatters';
 import Table from '../components/Table';
@@ -65,7 +65,7 @@ const Contracts: React.FC = () => {
       setToastError(false);
       const fetchFunction = authenticatedFetch(app);
       try {
-        const response = await fetchFunction('/contracts-by-status', {
+        const response = await fetchFunction('/api/contracts-by-status', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

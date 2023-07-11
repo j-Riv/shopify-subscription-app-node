@@ -15,6 +15,7 @@ dotenv.config();
 
 const verifyJwt = async (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers['x-suavescribe-token'];
+  console.log('TOKEN', token);
   if (!token) return res.status(401);
   try {
     // decode

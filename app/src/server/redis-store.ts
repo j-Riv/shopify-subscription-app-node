@@ -3,7 +3,7 @@
 // Import the Node redis package
 // import { Session } from '@shopify/shopify-api/dist/auth/session';
 import { createClient } from 'redis';
-import { Session } from '@shopify/shopify-api/dist/auth/session/index.js';
+import { Session } from '@shopify/shopify-api';
 import Logger from './logger.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -11,6 +11,7 @@ dotenv.config();
 class RedisStore {
   [x: string]: any;
   constructor() {
+    console.log('PROCESS.ENV.DOCKER', process.env.DOCKER);
     // Create a new redis client and connect to the server
     if (process.env.DOCKER === 'true') {
       this.client = createClient({
@@ -63,8 +64,10 @@ class RedisStore {
         // cloneSession will convert our javascript object into an instance of Session
         // cloneSession typically wants a Session object as input, but seems to also work
         // with just a plain javascript object
-        return Session.cloneSession(sessionObj, sessionObj.id);
-        // return JSON.parse(reply);
+        // console.log('SESSION OBJ', sessionObj);
+        // return Session.cloneSession(sessionObj, sessionObj.id);
+        return new Session({ ...sessionObj, id });
+        // return Session.fromPropertyArray(sessionObj);
       } else {
         return undefined;
       }
@@ -84,6 +87,39 @@ class RedisStore {
       // Inside our try, we use the `delAsync` method to delete our session.
       // This method returns a boolean (true if successful, false if not)
       return await this.client.del(id);
+    } catch (err) {
+      Logger.log('error', err.message);
+      throw new Error(err);
+    }
+  }
+
+  async deleteMultipleCallback(ids: string[]) {
+    try {
+      // Inside our try, we use the `delAsync` method to delete our session.
+      // This method returns a boolean (true if successful, false if not)
+      return await Promise.all(ids.map((id) => this.client.del(id)));
+    } catch (err) {
+      Logger.log('error', err.message);
+      throw new Error(err);
+    }
+  }
+
+  async findSessionsByShopCallback(shop: string) {
+    try {
+      const idKeysArrayString = await this.client.get(shop);
+      if (!idKeysArrayString) return [];
+
+      const idKeysArray = JSON.parse(idKeysArrayString);
+      const results: Session[] = [];
+      for (const idKey of idKeysArray) {
+        const rawResult = await this.client.get(idKey, false);
+        if (!rawResult) continue;
+
+        const session = Session.fromPropertyArray(JSON.parse(rawResult));
+        results.push(session);
+      }
+
+      return results;
     } catch (err) {
       Logger.log('error', err.message);
       throw new Error(err);
