@@ -48,7 +48,7 @@ COPY --from=BUILD_IMAGE --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=BUILD_IMAGE --chown=nodejs:nodejs /app/app_proxy ./app_proxy
 COPY --from=BUILD_IMAGE --chown=nodejs:nodejs /app/prisma ./prisma
 COPY --from=BUILD_IMAGE --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=BUILD_IMAGE --chown=nodejs:nodejs /app/.env.production ./.env
+COPY --from=BUILD_IMAGE --chown=nodejs:nodejs /app/.env.staging ./.env
 
 # Create log directory
 RUN mkdir -p /app/logs

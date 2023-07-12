@@ -109,8 +109,7 @@ const App = () => (
     <PolarisProvider i18n={translations}>
       <AppBridgeProvider
         config={{
-          // apiKey: process.env.SHOPIFY_API_KEY,
-          apiKey: '8afa485189a69fe949cc451d16b3d5d6',
+          apiKey: process.env.SHOPIFY_API_KEY,
           host: new URL(window.location.href).searchParams.get('host'),
           forceRedirect: true,
         }}

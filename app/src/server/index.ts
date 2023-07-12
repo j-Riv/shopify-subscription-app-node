@@ -23,6 +23,7 @@ import Logger from './logger.js';
 // Import Routes
 import subscriptionRoutes from './routes/subscriptions.js';
 import proxyRoutes from './routes/proxy.js';
+import { scheduler } from './scheduler.js';
 
 const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || '8081', 10);
 
@@ -53,7 +54,7 @@ app.post(
 );
 
 // init scheduler
-// scheduler();
+scheduler();
 
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.js

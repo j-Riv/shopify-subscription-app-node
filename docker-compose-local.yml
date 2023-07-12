@@ -51,3 +51,27 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+  # app
+  suavescribe:
+    image: 'jriv/suavescribe:latest'
+    container_name: 'suavescribe'
+    restart: always
+    ports:
+      - 8081:8081
+    volumes:
+      - './app:/app'
+    depends_on:
+      - redis
+      - postgres
+    links:
+      - redis
+      - postgres
+    networks:
+      # - traefik_proxy
+      - default
+    labels:
+      - 'traefik.enable=false'
+    logging:
+      options:
+        max-size: '10m'
+        max-file: '3'

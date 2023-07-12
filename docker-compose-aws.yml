@@ -115,15 +115,15 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
-  # # app
+  # app
   suavescribe:
-    image: 'jriv/suavescribe-v2:latest'
-    container_name: 'suavescribe-v2'
+    image: 'jriv/suavescribe:latest'
+    container_name: 'suavescribe'
     restart: always
     ports:
       - 8081:8081
     volumes:
-      - './app:/usr/app'
+      - './app:/app'
     depends_on:
       - redis
       - postgres
@@ -143,4 +143,10 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
-  
+
+networks:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
+  default:
+    driver: bridge

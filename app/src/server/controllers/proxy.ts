@@ -65,6 +65,7 @@ export const getCustomerSubscriptions = async (req: Request, res: Response) => {
           if (pgRes) {
             req.client = createClient(shop, pgRes.accessToken);
             const subscriptions = await getCustomerSubscriptionContractsById(req, customerId);
+
             if (subscriptions.length > 0) {
               res.json(subscriptions);
             } else {

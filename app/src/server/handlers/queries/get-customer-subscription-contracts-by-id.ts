@@ -222,6 +222,7 @@ export const getCustomerSubscriptionContractsById = async (
       },
     })
     .then((response: Data) => {
+      console.log('getCustomerSubscriptionContractsById', response);
       return response.data.customers.edges.length > 0
         ? response.data.customers.edges[0].node.subscriptionContracts.edges
         : response.data.customers.edges;
