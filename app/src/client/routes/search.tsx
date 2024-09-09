@@ -72,8 +72,8 @@ function Index() {
                     {contract.node.status}
                   </Badge>,
                   // formatId(contract.node.id),
-                  contract.node.customer.email,
                   formatId(contract.node.customer.id),
+                  contract.node.customer.email,
                   formatDate(contract.node.nextBillingDate),
                   contract.node.lastPaymentStatus,
                   <Button

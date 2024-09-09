@@ -116,9 +116,9 @@ services:
         max-size: '10m'
         max-file: '3'
   # app
-  subscriptions:
-    image: 'jriv/subscriptions:latest'
-    container_name: 'subscriptions'
+  suavescribe-v2:
+    image: '069410259217.dkr.ecr.us-west-1.amazonaws.com/suavescribe:latest'
+    container_name: 'suavescribe-v2'
     restart: always
     ports:
       - 8081:8081

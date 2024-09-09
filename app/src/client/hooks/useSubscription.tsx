@@ -25,6 +25,7 @@ export function useSubscription(id: string) {
   const [country, setCountry] = useState<string>('');
   const [province, setProvince] = useState<string>('');
   const [zip, setZip] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
 
   const [itemToAdd, setItemToAdd] = useState<string>('');
   const [itemsToAdd, setItemsToAdd] = useState<any[]>([]);
@@ -75,6 +76,7 @@ export function useSubscription(id: string) {
           if (d.deliveryMethod.address.country) setCountry(d.deliveryMethod.address.country);
           if (d.deliveryMethod.address.province) setProvince(d.deliveryMethod.address.province);
           if (d.deliveryMethod.address.zip) setZip(d.deliveryMethod.address.zip);
+          if (d.deliveryMethod.address.phone) setPhone(d.deliveryMethod.address.phone);
           if (d.deliveryMethod.address.firstName) setFirstName(d.deliveryMethod.address.firstName);
           if (d.deliveryMethod.address.lastName) setLastName(d.deliveryMethod.address.lastName);
         });
@@ -153,6 +155,8 @@ export function useSubscription(id: string) {
 
   const handleZipChange = (value: string) => setZip(value);
 
+  const handlePhoneChange = (value: string) => setPhone(value);
+
   const handleItemToAddChange = (value: string) => setItemToAdd(value);
 
   return {
@@ -182,6 +186,7 @@ export function useSubscription(id: string) {
     country,
     province,
     zip,
+    phone,
     itemToAdd,
     itemsToAdd,
     // handlers
@@ -194,6 +199,7 @@ export function useSubscription(id: string) {
     handleProvinceChange,
     handleCountryChange,
     handleZipChange,
+    handlePhoneChange,
     handleIntervalChange,
     handleIntervalCountChange,
     handleNextBillingDateChange,
