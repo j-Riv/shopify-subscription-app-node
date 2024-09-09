@@ -61,6 +61,7 @@ function EditSubscription() {
     country,
     province,
     zip,
+    phone,
     itemToAdd,
     itemsToAdd,
     // handlers
@@ -73,6 +74,7 @@ function EditSubscription() {
     handleProvinceChange,
     handleCountryChange,
     handleZipChange,
+    handlePhoneChange,
     handleIntervalChange,
     handleIntervalCountChange,
     handleNextBillingDateChange,
@@ -437,6 +439,14 @@ function EditSubscription() {
                   value={zip}
                   autoComplete=""
                 />
+                <TextField
+                  label="Phone"
+                  type="text"
+                  placeholder="Phone"
+                  onChange={handlePhoneChange}
+                  value={phone}
+                  autoComplete=""
+                />
                 <Stack distribution="trailing">
                   <UpdateSubscriptionButton
                     contractId={contractId}
@@ -453,6 +463,7 @@ function EditSubscription() {
                             province,
                             country,
                             zip,
+                            phone,
                           },
                         },
                       },
