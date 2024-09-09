@@ -116,9 +116,9 @@ services:
         max-size: '10m'
         max-file: '3'
   # app
-  suavescribe:
-    image: 'jriv/suavescribe:latest'
-    container_name: 'suavescribe'
+  subscriptions:
+    image: 'jriv/subscriptions:latest'
+    container_name: 'subscriptions'
     restart: always
     ports:
       - 8081:8081
