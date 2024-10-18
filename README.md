@@ -2,7 +2,7 @@
 
 > Embedded Shopify Subscription app made with Node, Prisma, React, Polaris, App Bridge React and TypeScript.
 
-🚧🔨👷 Currently Under Development
+🚧🔨👷 No Longer Maintained.
 
 The current Docker Stack uses Google Oauth, to access exposed containers, via the `thomseddon/traefik-forward-auth` image. You don't need this if you don't expose the Traefik dashboard. You should probably replace this in production. You could also replace Traefik with NGINX.
 
